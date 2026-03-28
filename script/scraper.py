@@ -27,14 +27,16 @@ def fetch(train_info="Dbrt-Ndls-Rajdhani-12423", time="1y"):
         response.raise_for_status()  # will raise the exception if bad status
         # Save the raw HTML
         with open(
-            f"script/etrain_raw_{train_info.split('-')[-1]}.html", "w", encoding="utf-8"
+            f"data/raw/etrain_raw_{train_info.split('-')[-1]}.html",
+            "w",
+            encoding="utf-8",
         ) as f:
             f.write(response.text)
-        print(f"HTML successfully saved to etrain_raw_{train_info.split('-')[-1]}.html")
+        print(f"HTML successfully saved to data/raw/etrain_raw_{train_info.split('-')[-1]}.html")
 
     except Exception as e:
         print(f"Error fetching {e}")
-        return None
+        exit()
 
 
 if __name__ == "__main__":
