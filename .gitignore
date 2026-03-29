@@ -5,6 +5,9 @@ build/
 dist/
 wheels/
 *.egg-info
-
+tempCodeRunnerFile.py
+.python-version
 # Virtual environments
 .venv
+# Data Folder 
+data/

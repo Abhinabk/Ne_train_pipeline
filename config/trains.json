@@ -1,0 +1,94 @@
+{
+  "description": "Trains for Northeast Train Pipeline - Weather & Festival Impact Study (Assam/Northeast focus)",
+  "total_trains": 10,
+  "categories": {
+    "long_distance": [
+      {
+        "train_no": "12423",
+        "name": "DBRT NDLS RAJDHANI ",
+        "type": "Rajdhani",
+        "route": "DIBRUGARH to NEW DELHI",
+        "frequency": "Daily",
+        "direction": "up",
+        "notes": "Premium train, already scraped, highly sensitive to delays"
+      },
+      {
+        "train_no": "15657",
+        "name": "BRAHMPUTRA MAIL",
+        "type": "Express",
+        "route": "DELHI to KAMAKHYA",
+        "frequency": "Daily",
+        "direction": "down",
+        "notes": "Classic route, heavily affected by Brahmaputra floods"
+      },
+      {
+        "train_no": "15909",
+        "name": "AVADH ASSAM EXP",
+        "type": "Express",
+        "route": "DIBRUGARH to LALGARH JN",
+        "frequency": "Daily",
+        "direction": "up",
+        "notes": "Very long route with many stops"
+      },
+      {
+        "train_no": "12505",
+        "name": "NORTH EAST EXP",
+        "type": "Express",
+        "route": "KAMAKHYA to ANAND VIHAR TRM",
+        "frequency": "Daily",
+        "direction": "up",
+        "notes": "Popular daily connector to North India"
+      },
+        {
+        "train_no": "15946",
+        "name": "DBRG LTT EXPRESS",
+        "type": "Express",
+        "route": "DIBRUGARH to LOKMANYATILAK T(MUMBAI)",
+        "distance_km": "~2300",
+        "frequency": "Weekly",
+        "direction": "down",
+        "notes": "Upper Assam origin, good for festival rush"
+      }
+    ],
+    "medium_distance": [
+      {
+        "train_no": "15960",
+        "name": "KAMRUP EXPRESS",
+        "type": "Express",
+        "route": "DIBRUGARH to HOWRAH JN",
+        "frequency": "Daily",
+        "direction": "up",
+        "notes": "Very popular in Northeast"
+      },
+      {
+        "train_no": "12346",
+        "name": "SARAIGHAT EXP",
+        "type": "Express",
+        "route": "GUWAHATI to HOWRAH JN",
+        "frequency": "Daily",
+        "direction": "up",
+        "notes": "Modern coach, long South-NE corridor"
+      }
+    ],
+    "short_distance_intra_state": [
+      {
+        "train_no": "12067",
+        "name": "JAN SHATABDI EX",
+        "type": "Express",
+        "route": "GUWAHATI to JORHAT TOWN",
+        "frequency": "6 days/week",
+        "direction": "inter assam",
+        "notes": "Regional Assam train, excellent for local weather impact"
+      },
+      {
+        "train_no": "15615",
+        "name": "GHY SCL EXP",
+        "type": "Express",
+        "route": "GUWAHATI to SILCHAR",
+        "frequency": "Daily",
+        "direction": "inter assam",
+        "notes": "Intra-Assam + Barak Valley route, passes through hilly/flood-prone areas — highly sensitive to rain, landslides and local disruptions"
+      }
+    ]
+  }
+}

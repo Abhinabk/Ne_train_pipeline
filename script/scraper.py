@@ -1,8 +1,7 @@
 import requests
 from fake_useragent import UserAgent
 
-
-# create a session with fake headers
+# create a session with changing headers
 def create_session():
     ua = UserAgent()
     session = requests.Session()
@@ -19,27 +18,23 @@ def create_session():
 
 
 # make a get request
-def fetch(train_info="Dbrt-Ndls-Rajdhani-12423", time="1y"):
-    url = f"https://etrain.info/train/{train_info}/history?d={time}"
+def fetch(train_no=None,train_name=None, time="1y"):
+    url = f"https://etrain.info/train/{train_no}/history?d={time}"
     try:
         session = create_session()
         response = session.get(url, timeout=15)
         response.raise_for_status()  # will raise the exception if bad status
         # Save the raw HTML
         with open(
-            f"data/raw/etrain_raw_{train_info.split('-')[-1]}.html",
+            f"data/raw/etrain_raw_{train_name}.html",
             "w",
             encoding="utf-8",
         ) as f:
             f.write(response.text)
-        print(f"HTML successfully saved to data/raw/etrain_raw_{train_info.split('-')[-1]}.html")
+        print(f"HTML successfully saved to data/raw/etrain_raw_{train_name}.html")
 
     except Exception as e:
         print(f"Error fetching {e}")
         exit()
 
 
-if __name__ == "__main__":
-    html = fetch("Dbrt-Ndls-Rajdhani-12423", "1y")
-    if html:
-        print("\n✅ Fetch completed successfully. Ready for parsing!")
