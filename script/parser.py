@@ -4,6 +4,14 @@ import re
 import pandas as pd
 from bs4 import BeautifulSoup
 
+def run_extraction_helper(script,phrase):
+    temp = ""
+    for s in script:
+        text = s.get_text()
+        if str(phrase) in text:
+            temp = text
+            break  
+    return temp  
 
 def parse_train_history(content):
     """
@@ -30,12 +38,7 @@ def extract_data_primary(script):
     # NOTE Delay Average is in minutes the site rounds it
 
     primaryData = ""
-    temp = ""
-    for s in script:
-        text = s.get_text()
-        if "et.rsStat.primaryData" in text:
-            temp = text
-            break
+    temp = run_extraction_helper(script,"primaryData")
     primaryData = re.search(r"et\.rsStat\.primaryData\s*=\s*(\[.*?\]);", temp)
     primary = primaryData.group(1)
     primary = primary.replace("'", '"')
@@ -53,14 +56,8 @@ def convert_to_csv_primary(json_data, filename="give_name"):
 def extract_data_time_series(script):
     """Extracts  et.rsStat.tooltipData from the script
     originally is in js object converts to json"""
-    #
-    tooltipData = ""
-    temp = ""
-    for s in script:
-        text = s.get_text()
-        if "et.rsStat.tooltipData" in text:
-            temp = text
-            break
+
+    temp = run_extraction_helper(script,"tooltipData")
     tooltipData = re.search(r"et\.rsStat\.tooltipData\s*=\s*(\[[^\;]*\])", temp)
     tooltip = tooltipData.group(1)
 
@@ -84,12 +81,7 @@ def convert_to_csv_time_series(json_data, filename="give_name"):
 
 
 def extract_state_name(script):
-    temp = ""
-    for s in script:
-        text = s.get_text()
-        if "stnname" in text:
-            temp = text
-            break
+    temp = run_extraction_helper(script,"stnname")
     stn_name_Data = re.search(r"stnname\s*=\s*(\{[\s\S]*?\})", temp)
     stn_name = stn_name_Data.group(1)
     stn_name = re.sub(r"(\w+)\s*:",lambda x: f'"{x.group(1)}":',stn_name)
@@ -116,13 +108,11 @@ if __name__ == "__main__":
         print("The file was not found.")
         exit()
 
-    # primary = extract_data_primary(data)
-    # df_primary = convert_to_csv_primary(primary, "primary")
-    # print(primary)
+    primary = extract_data_primary(data)
+    df_primary = convert_to_csv_primary(primary, "primary")
 
-    # time_series = extract_data_time_series(data)
-    # df_time_series = convert_to_csv_time_series(time_series, "time_series")
-    # print(time_series)
+    time_series = extract_data_time_series(data)
+    df_time_series = convert_to_csv_time_series(time_series, "time_series")
 
     state_name = extract_state_name(data)
     df_sate_name = convert_to_csv_state_name(state_name, "state_names")
