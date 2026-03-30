@@ -14,7 +14,7 @@ def run_extraction_helper(script:Path,var:str):
             break  
     return temp  
 
-def all_script(content:str)->list:
+def retrive_all_script_tags(content:str)->list:
     """
     retrive the raw HTML file and extract the relevent script tag
     #IMP var to consider
@@ -41,15 +41,17 @@ def extract_data_primary(script_path:Path)->json:
     temp = run_extraction_helper(script_path,"primaryData")
     primaryData = re.search(r"et\.rsStat\.primaryData\s*=\s*(\[.*?\]);", temp)
     primary = primaryData.group(1)
+    if not primary:
+        return None
     primary = primary.replace("'", '"')
     return primary
 
 
-def convert_to_csv_primary(json_data:json, train_no:str)->None:
+def convert_to_csv_primary(json_data:dict,csv_path:Path)->None:
     data = json.loads(json_data)
     # list evry items are getting treated as rows had to manually give column names a sifrst row
     df = pd.DataFrame(data[1:], columns=data[0])
-    df.to_csv(f"data/raw_csv/{train_no}.csv", index=False)
+    df.to_csv(f"{csv_path}/primary.csv", index=False)
 
 
 def extract_data_time_series(script_path:Path)->json:
@@ -59,6 +61,7 @@ def extract_data_time_series(script_path:Path)->json:
     temp = run_extraction_helper(script_path,"tooltipData")
     tooltipData = re.search(r"et\.rsStat\.tooltipData\s*=\s*(\[[^\;]*\])", temp)
     tooltip = tooltipData.group(1)
+    if not tooltip:return None
 
     def fix_date(match):
         y, m, d = map(int, match.groups())
@@ -69,45 +72,68 @@ def extract_data_time_series(script_path:Path)->json:
     return tooltip
 
 
-def convert_to_csv_time_series(json_data:json, train_no)->None:
+def convert_to_csv_time_series(json_data:dict, csv_path:Path)->None:
     data = json.loads(json_data)
     header = data[0]
     # have to manually set the columns
     columns = ["Date"] + [col["label"] for col in header[1:]]
     df = pd.DataFrame(data[1:], columns=columns)
-    df.to_csv(f"data/raw_csv/{train_no}.csv", index=False)
+    df.to_csv(f"{csv_path}/time_series.csv", index=False)
 
 
-def extract_state_name(script_path:Path)->json:
+def extract_state_name(script_path:Path)->list[dict|None]:
     temp = run_extraction_helper(script_path,"stnname")
     stn_name_Data = re.search(r"stnname\s*=\s*(\{[\s\S]*?\})", temp)
+    if not stn_name_Data:
+        return None
+    
     stn_name = stn_name_Data.group(1)
     stn_name = re.sub(r"(\w+)\s*:",lambda x: f'"{x.group(1)}":',stn_name)
     return stn_name
 
 
-def convert_to_csv_state_name(json_data:json, train_no)->None:
+def convert_to_csv_state_name(json_data:dict, csv_path:Path)->None:
     data = json.loads(json_data)
     df = pd.DataFrame(list(data.items()),columns=["code", "name"])
-    df.to_csv(f"data/raw_csv/{train_no}.csv", index=False)
+    df.to_csv(f"{csv_path}/state_name.csv", index=False)
 
 
+def parser(html_file_path:Path,raw_csv_path:Path)->None:
+
+    for html_file in html_file_path.glob("*.html"):
+        if not html_file.is_file():
+            continue
+
+        content = html_file.read_text()
+        data = retrive_all_script_tags(content)
+
+        train_no = html_file.stem.split("_")[-1]
+        #make a train_no dir if not exist in /data
+
+        train_dir = raw_csv_path / train_no
+        if train_dir.exists():
+            print(f"{train_dir} already exits")
+            continue
+        train_dir.mkdir(parents=True,exist_ok=True)
+
+        primary = extract_data_primary(data)
+        if primary:
+            convert_to_csv_primary(primary,train_dir)
+        else:
+            print(f"[WARN] No state_name data for train {train_no}")
+
+        time_series = extract_data_time_series(data)
+        if time_series:
+            convert_to_csv_time_series(time_series,train_dir)
+        else:
+            print(f"[WARN] No state_name data for train {train_no}")
+
+        state_name = extract_state_name(data)
+        if state_name:
+            convert_to_csv_state_name(state_name, train_dir)
+        else:
+            print(f"[WARN] No state_name data for train {train_no}")
+            print(f"Can make your own csv its just an expansion of state names")
 
 if __name__ == "__main__":
-    try:
-        with open("data/raw_html/DBRT_NDLS_RAJDHANI_12423.html", "r", encoding="utf-8") as f:
-            content = f.read()
-            data = all_script(content)
-
-    except FileNotFoundError:
-        print("The file was not found.")
-        exit()
-
-    primary = extract_data_primary(data)
-    df_primary = convert_to_csv_primary(primary, "primary")
-
-    time_series = extract_data_time_series(data)
-    df_time_series = convert_to_csv_time_series(time_series, "time_series")
-
-    state_name = extract_state_name(data)
-    df_sate_name = convert_to_csv_state_name(state_name, "state_names")
+   parser(Path("data/raw_html"))

@@ -1,5 +1,5 @@
 from config import train_info
-from script import scraper
+from script import scraper,parser
 import time
 import random
 from pathlib import Path
@@ -32,4 +32,7 @@ if __name__ == "__main__":
         print("\n Fetch completed successfully. Ready for parsing!")
     else:
         print("\n nothing fetched (all files already exist)")
+    
+    #parser call
+    parser.parser(raw_html_path,raw_csv_path)
     
