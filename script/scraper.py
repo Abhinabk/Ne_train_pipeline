@@ -18,20 +18,21 @@ def create_session():
 
 
 # make a get request
-def fetch(train_no=None,train_name=None, time="1y"):
+def fetch(train_no,train_name, time,path):
     url = f"https://etrain.info/train/{train_no}/history?d={time}"
+    #TODO validate path
     try:
         session = create_session()
         response = session.get(url, timeout=15)
         response.raise_for_status()  # will raise the exception if bad status
         # Save the raw HTML
         with open(
-            f"data/raw/etrain_raw_{train_name}.html",
+            f"{path}/{train_name}_{train_no}.html",
             "w",
             encoding="utf-8",
         ) as f:
             f.write(response.text)
-        print(f"HTML successfully saved to data/raw/etrain_raw_{train_name}.html")
+        print(f"HTML successfully saved to {path}/{train_name}_{train_no}.html")
 
     except Exception as e:
         print(f"Error fetching {e}")
