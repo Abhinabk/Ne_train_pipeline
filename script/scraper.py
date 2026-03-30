@@ -1,5 +1,7 @@
 import requests
 from fake_useragent import UserAgent
+from pathlib import Path
+
 
 # create a session with changing headers
 def create_session():
@@ -17,10 +19,10 @@ def create_session():
     return session
 
 
-# make a get request
-def fetch(train_no,train_name, time,path):
+def fetch(train_no: str, train_name: str, time: str, path: Path) -> None:
+    """Creates a request session fetches the train based on train_no then saves it to path"""
     url = f"https://etrain.info/train/{train_no}/history?d={time}"
-    #TODO validate path
+    # TODO validate path
     try:
         session = create_session()
         response = session.get(url, timeout=15)
@@ -37,5 +39,3 @@ def fetch(train_no,train_name, time,path):
     except Exception as e:
         print(f"Error fetching {e}")
         exit()
-
-
