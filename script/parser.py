@@ -51,8 +51,11 @@ def extract_data_primary(script_path: Path) -> json:
 
 def convert_to_csv_primary(json_data: dict, csv_path: Path) -> None:
     data = json.loads(json_data)
-    # list evry items are getting treated as rows had to manually give column names a sifrst row
+    # in list evry items are getting treated as rows had to manually give column names a sifrst row
     df = pd.DataFrame(data[1:], columns=data[0])
+    # assuimng csv_path will always have train no at the end
+    train_no = csv_path.stem
+    df.insert(0, "Train", train_no)
     df.to_csv(f"{csv_path}/primary.csv", index=False)
 
 
@@ -81,6 +84,8 @@ def convert_to_csv_time_series(json_data: dict, csv_path: Path) -> None:
     # have to manually set the columns
     columns = ["Date"] + [col["label"] for col in header[1:]]
     df = pd.DataFrame(data[1:], columns=columns)
+    train_no = csv_path.stem
+    df.insert(0, "Train", train_no)
     df.to_csv(f"{csv_path}/time_series.csv", index=False)
 
 
@@ -98,6 +103,8 @@ def extract_state_name(script_path: Path) -> list[dict | None]:
 def convert_to_csv_state_name(json_data: dict, csv_path: Path) -> None:
     data = json.loads(json_data)
     df = pd.DataFrame(list(data.items()), columns=["code", "name"])
+    train_no = csv_path.stem
+    df.insert(0, "Train", train_no)
     df.to_csv(f"{csv_path}/state_name.csv", index=False)
 
 
