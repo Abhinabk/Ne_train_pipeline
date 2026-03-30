@@ -3,17 +3,18 @@ import re
 
 import pandas as pd
 from bs4 import BeautifulSoup
+from pathlib import Path
 
-def run_extraction_helper(script,phrase):
+def run_extraction_helper(script:Path,var:str):
     temp = ""
     for s in script:
         text = s.get_text()
-        if str(phrase) in text:
+        if var in text:
             temp = text
             break  
     return temp  
 
-def parse_train_history(content):
+def all_script(content:str)->list:
     """
     retrive the raw HTML file and extract the relevent script tag
     #IMP var to consider
@@ -27,37 +28,35 @@ def parse_train_history(content):
     soup = BeautifulSoup(content, "html.parser")
 
     # paarse the script tags to find the data in et.rsStat.primaryData  and et.rsStat.tooltipData
-
     script = soup.find_all("script")  # will return a list of scripts
     return script
 
 
-def extract_data_primary(script):
+def extract_data_primary(script_path:Path)->json:
     """Extracts  et.rsStat.primaryData from the script
     originally is in js object converts to json"""
     # NOTE Delay Average is in minutes the site rounds it
 
     primaryData = ""
-    temp = run_extraction_helper(script,"primaryData")
+    temp = run_extraction_helper(script_path,"primaryData")
     primaryData = re.search(r"et\.rsStat\.primaryData\s*=\s*(\[.*?\]);", temp)
     primary = primaryData.group(1)
     primary = primary.replace("'", '"')
     return primary
 
 
-def convert_to_csv_primary(json_data, filename="give_name"):
+def convert_to_csv_primary(json_data:json, train_no:str)->None:
     data = json.loads(json_data)
     # list evry items are getting treated as rows had to manually give column names a sifrst row
     df = pd.DataFrame(data[1:], columns=data[0])
-    df.to_csv(f"data/final/{filename}.csv", index=False)
-    return df
+    df.to_csv(f"data/raw_csv/{train_no}.csv", index=False)
 
 
-def extract_data_time_series(script):
+def extract_data_time_series(script_path:Path)->json:
     """Extracts  et.rsStat.tooltipData from the script
     originally is in js object converts to json"""
 
-    temp = run_extraction_helper(script,"tooltipData")
+    temp = run_extraction_helper(script_path,"tooltipData")
     tooltipData = re.search(r"et\.rsStat\.tooltipData\s*=\s*(\[[^\;]*\])", temp)
     tooltip = tooltipData.group(1)
 
@@ -70,39 +69,35 @@ def extract_data_time_series(script):
     return tooltip
 
 
-def convert_to_csv_time_series(json_data, filename="give_name"):
+def convert_to_csv_time_series(json_data:json, train_no)->None:
     data = json.loads(json_data)
     header = data[0]
     # have to manually set the columns
     columns = ["Date"] + [col["label"] for col in header[1:]]
     df = pd.DataFrame(data[1:], columns=columns)
-    df.to_csv(f"data/final/{filename}.csv", index=False)
-    return df
+    df.to_csv(f"data/raw_csv/{train_no}.csv", index=False)
 
 
-def extract_state_name(script):
-    temp = run_extraction_helper(script,"stnname")
+def extract_state_name(script_path:Path)->json:
+    temp = run_extraction_helper(script_path,"stnname")
     stn_name_Data = re.search(r"stnname\s*=\s*(\{[\s\S]*?\})", temp)
     stn_name = stn_name_Data.group(1)
     stn_name = re.sub(r"(\w+)\s*:",lambda x: f'"{x.group(1)}":',stn_name)
     return stn_name
 
 
-def convert_to_csv_state_name(json_data, filename="give_name"):
+def convert_to_csv_state_name(json_data:json, train_no)->None:
     data = json.loads(json_data)
     df = pd.DataFrame(list(data.items()),columns=["code", "name"])
-    df.to_csv(f"data/final/{filename}.csv", index=False)
-    return df
-    # df = pd.DataFrame(data)
-    # df.to_csv(f"data/final/{filename}.csv", index=False)
-    # return df
+    df.to_csv(f"data/raw_csv/{train_no}.csv", index=False)
+
 
 
 if __name__ == "__main__":
     try:
-        with open("data/raw/etrain_raw_12423.html", "r", encoding="utf-8") as f:
+        with open("data/raw_html/DBRT_NDLS_RAJDHANI_12423.html", "r", encoding="utf-8") as f:
             content = f.read()
-            data = parse_train_history(content)
+            data = all_script(content)
 
     except FileNotFoundError:
         print("The file was not found.")

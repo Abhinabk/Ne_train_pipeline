@@ -14,12 +14,14 @@ if __name__ == "__main__":
     fetched_flag = False
 
     for train_num,train_name in train_info.items():
+
         p = raw_html_path/f"{train_name}_{train_num}.html"
         if p.exists():
             print(f"{train_name}_{train_num}.html already present skipping ...")
             continue
         print(f"Fetching {train_name}_{train_num}...")
         
+        #scraper call
         html = scraper.fetch(train_num,train_name,duration,raw_html_path)
         fetched_flag = True             
         delay = random.uniform(2,4)
