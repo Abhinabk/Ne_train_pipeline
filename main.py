@@ -8,7 +8,11 @@ if __name__ == "__main__":
     path = Path.cwd()
     raw_html_path = path / "data/raw_html"
     raw_csv_path = path / "data/raw_csv"
-
+    
+    #create path if not exist
+    raw_html_path.mkdir(parents=True,exist_ok=True)
+    raw_csv_path.mkdir(parents=True,exist_ok=True)
+    
     train_info = train_info.get_train_info("config/trains.json")
     duration = "1y"
     fetched_flag = False
@@ -17,9 +21,9 @@ if __name__ == "__main__":
 
         p = raw_html_path / f"{train_name}_{train_num}.html"
         if p.exists():
-            print(f"{train_name}_{train_num}.html already present skipping ...")
+            print(f"{train_name}-{train_num}.html already present skipping ...")
             continue
-        print(f"Fetching {train_name}_{train_num}...")
+        print(f"Fetching {train_name}-{train_num}...")
 
         # scraper call
         html = scraper.fetch(train_num, train_name, duration, raw_html_path)

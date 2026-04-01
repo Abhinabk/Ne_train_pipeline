@@ -64,7 +64,7 @@ def extract_data_time_series(script_path: Path) -> json:
     originally is in js object converts to json"""
 
     temp = run_extraction_helper(script_path, "tooltipData")
-    tooltipData = re.search(r"et\.rsStat\.tooltipData\s*=\s*(\[[^\;]*\])", temp)
+    tooltipData = re.search(r"et\.rsStat\.tooltipData\s*=\s*(\[[\s\S]*?\]);", temp)
     tooltip = tooltipData.group(1)
     if not tooltip:
         return None
@@ -89,23 +89,6 @@ def convert_to_csv_time_series(json_data: dict, csv_path: Path) -> None:
     df.to_csv(f"{csv_path}/time_series.csv", index=False)
 
 
-def extract_state_name(script_path: Path) -> list[dict | None]:
-    temp = run_extraction_helper(script_path, "stnname")
-    stn_name_Data = re.search(r"stnname\s*=\s*(\{[\s\S]*?\})", temp)
-    if not stn_name_Data:
-        return None
-
-    stn_name = stn_name_Data.group(1)
-    stn_name = re.sub(r"(\w+)\s*:", lambda x: f'"{x.group(1)}":', stn_name)
-    return stn_name
-
-
-def convert_to_csv_state_name(json_data: dict, csv_path: Path) -> None:
-    data = json.loads(json_data)
-    df = pd.DataFrame(list(data.items()), columns=["code", "name"])
-    train_no = csv_path.stem
-    df.insert(0, "Train", train_no)
-    df.to_csv(f"{csv_path}/state_name.csv", index=False)
 
 
 def parser(html_file_path: Path, raw_csv_path: Path) -> None:
@@ -138,12 +121,6 @@ def parser(html_file_path: Path, raw_csv_path: Path) -> None:
         else:
             print(f"[WARN] No state_name data for train {train_no}")
 
-        state_name = extract_state_name(data)
-        if state_name:
-            convert_to_csv_state_name(state_name, train_dir)
-        else:
-            print(f"[WARN] No state_name data for train {train_no}")
-            print(f"Can make your own csv its just an expansion of state names")
 
 
 if __name__ == "__main__":

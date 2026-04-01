@@ -5,16 +5,16 @@
     "long_distance": [
       {
         "train_no": "12423",
-        "name": "DBRT NDLS RAJDHANI",
+        "name": "Dbrt-Ndls-Rajdhani",
         "type": "Rajdhani",
         "route": "DIBRUGARH to NEW DELHI",
         "frequency": "Daily",
         "direction": "up",
-        "notes": "Premium train, already scraped, highly sensitive to delays"
+        "notes": "Premium train, highly sensitive to delays"
       },
       {
         "train_no": "15657",
-        "name": "BRAHMPUTRA MAIL",
+        "name": "Brahmputra-Mail",
         "type": "Express",
         "route": "DELHI to KAMAKHYA",
         "frequency": "Daily",
@@ -23,7 +23,7 @@
       },
       {
         "train_no": "15909",
-        "name": "AVADH ASSAM EXP",
+        "name": "Avadh-Assam-Exp",
         "type": "Express",
         "route": "DIBRUGARH to LALGARH JN",
         "frequency": "Daily",
@@ -32,7 +32,7 @@
       },
       {
         "train_no": "12505",
-        "name": "NORTH EAST EXP",
+        "name": "North-East-Exp",
         "type": "Express",
         "route": "KAMAKHYA to ANAND VIHAR TRM",
         "frequency": "Daily",
@@ -41,7 +41,7 @@
       },
         {
         "train_no": "15946",
-        "name": "DBRG LTT EXPRESS",
+        "name": "Dbrg-Ltt-Express",
         "type": "Express",
         "route": "DIBRUGARH to LOKMANYATILAK T(MUMBAI)",
         "distance_km": "~2300",
@@ -53,7 +53,7 @@
     "medium_distance": [
       {
         "train_no": "15960",
-        "name": "KAMRUP EXPRESS",
+        "name": "Kamrup-Express",
         "type": "Express",
         "route": "DIBRUGARH to HOWRAH JN",
         "frequency": "Daily",
@@ -62,7 +62,7 @@
       },
       {
         "train_no": "12346",
-        "name": "SARAIGHAT EXP",
+        "name": "Saraighat-Exp",
         "type": "Express",
         "route": "GUWAHATI to HOWRAH JN",
         "frequency": "Daily",
@@ -73,7 +73,7 @@
     "short_distance_intra_state": [
       {
         "train_no": "12067",
-        "name": "JAN SHATABDI EX",
+        "name": "Jan-Shatabdi-Ex",
         "type": "Express",
         "route": "GUWAHATI to JORHAT TOWN",
         "frequency": "6 days/week",
@@ -82,7 +82,7 @@
       },
       {
         "train_no": "15615",
-        "name": "GHY SCL EXP",
+        "name": "Ghy-Scl-Exp",
         "type": "Express",
         "route": "GUWAHATI to SILCHAR",
         "frequency": "Daily",
