@@ -121,6 +121,7 @@ def parser(html_file_path: Path, raw_csv_path: Path) -> None:
         else:
             print(f"[WARN] No state_name data for train {train_no}")
 
+        print("------ Parsing Completed ------")
 
 
 if __name__ == "__main__":
