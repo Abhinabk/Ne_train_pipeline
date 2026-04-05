@@ -12,8 +12,7 @@ def get_train_info(path_to_json: Path):
                 train_nums[item["train_no"]] = item["name"].replace(" ", "_")
     return train_nums
 
-
 if __name__ == "__main__":
     BASE_DIR = Path(__file__).resolve().parent
-    path_to_train = BASE_DIR / "config" / "trains.json"
+    path_to_train = BASE_DIR / "trains.json"
     print(get_train_info(path_to_train))
