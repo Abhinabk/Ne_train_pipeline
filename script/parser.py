@@ -2,11 +2,12 @@ import json
 import re
 
 import pandas as pd
-from bs4 import BeautifulSoup,Tag
+from bs4 import BeautifulSoup, Tag
 from pathlib import Path
-from typing import Optional, List
+from typing import List
 
-def run_extraction_helper(script: List[Tag], var: str)->str:
+
+def run_extraction_helper(script: List[Tag], var: str) -> str:
     temp = ""
     for s in script:
         text = s.get_text()
@@ -16,7 +17,7 @@ def run_extraction_helper(script: List[Tag], var: str)->str:
     return temp
 
 
-def retrive_all_script_tags(content: str) -> Optional[List[Tag]]:
+def retrive_all_script_tags(content: str) -> List[Tag] | None:
     """
     retrive the raw HTML file and extract the relevent script tag
     #IMP var to consider
@@ -34,7 +35,7 @@ def retrive_all_script_tags(content: str) -> Optional[List[Tag]]:
     return script
 
 
-def extract_data_primary(script_path: List[Tag]) ->  Optional[str]:
+def extract_data_primary(script_path: List[Tag]) -> str | None:
     """Extracts  et.rsStat.primaryData from the script
     originally is in js object converts to json"""
     # NOTE Delay Average is in minutes the site rounds it
@@ -57,7 +58,7 @@ def convert_to_csv_primary(json_data: str, csv_path: Path) -> None:
     df.to_csv(f"{csv_path}/primary.csv", index=False)
 
 
-def extract_data_time_series(script_path: List[Tag]) ->  Optional[str]:
+def extract_data_time_series(script_path: List[Tag]) -> str | None:
     """Extracts  et.rsStat.tooltipData from the script
     originally is in js object converts to json"""
 
@@ -65,8 +66,9 @@ def extract_data_time_series(script_path: List[Tag]) ->  Optional[str]:
     tooltipData = re.search(r"et\.rsStat\.tooltipData\s*=\s*(\[[\s\S]*?\]);", temp)
     if not tooltipData:
         return None
-    
+
     tooltip = tooltipData.group(1)
+
     def fix_date(match):
         y, m, d = map(int, match.groups())
         return f'"{y}-{m + 1:02d}-{d:02d}"'  # fix month as js month stars at 0
@@ -85,8 +87,6 @@ def convert_to_csv_time_series(json_data: str, csv_path: Path) -> None:
     train_no = csv_path.stem
     df.insert(0, "Train", train_no)
     df.to_csv(f"{csv_path}/time_series.csv", index=False)
-
-
 
 
 def parser(html_file_path: Path, raw_csv_path: Path) -> None:
@@ -122,5 +122,3 @@ def parser(html_file_path: Path, raw_csv_path: Path) -> None:
             print(f"[WARN] No state_name data for train {train_no}")
 
         print("------ Parsing Completed ------")
-
-

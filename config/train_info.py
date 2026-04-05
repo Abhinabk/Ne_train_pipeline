@@ -14,4 +14,6 @@ def get_train_info(path_to_json: Path):
 
 
 if __name__ == "__main__":
-    print(get_train_info("config/trains.json"))
+    BASE_DIR = Path(__file__).resolve().parent
+    path_to_train = BASE_DIR / "config" / "trains.json"
+    print(get_train_info(path_to_train))

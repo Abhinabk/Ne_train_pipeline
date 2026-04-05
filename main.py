@@ -40,12 +40,18 @@ if __name__ == "__main__":
 
     # parser call
     parser.parser(raw_html_path, raw_csv_path)
-    # fix column of primary.csv
+    # fix column of primary.csv but processing both files to /parsed_csv
     for train_dir in raw_csv_path.iterdir():
         if train_dir.is_dir():
-            file = train_dir / "primary.csv"
-            df = parse_raw_csv.process_primary(file, -1, "Avg Delay (in min)")
-            if df is not None:
+
+            file_primary = train_dir / "primary.csv"
+            file_time_series = train_dir / "time_series.csv"
+
+            df_primary = parse_raw_csv.process_raw_csv(file_primary,"Avg Delay (in min)",-1)
+            df_time_series = parse_raw_csv.process_raw_csv(file_time_series,None,None)
+
+            
+            if df_primary is not None:
                 train_parsed_path = parsed_csv_path / train_dir.stem
                 train_parsed_path.mkdir(parents=True, exist_ok=True)
                 output_file = train_parsed_path / "primary.csv"
@@ -55,6 +61,24 @@ if __name__ == "__main__":
 
                 print("Parsed raw file")
                 print(f"[INFO] Saving: {train_parsed_path}")
-                df.to_csv(output_file, index=False)
+                df_primary.to_csv(output_file, index=False)
             else:
-                print(f"[WARN] Skipped: {file.name}")
+                print(f"[WARN] Skipped: {file_primary.name}")
+
+            if df_time_series is not None:
+                train_parsed_path = parsed_csv_path / train_dir.stem
+                train_parsed_path.mkdir(parents=True, exist_ok=True)
+                output_file = train_parsed_path / "time_series.csv"
+                if output_file.exists():
+                    print(f"Skipping {output_file} already exist")
+                    continue
+
+                print("Parsed raw file")
+                print(f"[INFO] Saving: {train_parsed_path}")
+                df_time_series.to_csv(output_file, index=False)
+            else:
+                print(f"[WARN] Skipped: {file_primary.name}")
+
+
+
+

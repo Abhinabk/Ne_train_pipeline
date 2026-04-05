@@ -10,3 +10,11 @@ dependencies = [
     "pandas>=3.0.1",
     "requests>=2.33.0",
 ]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.15.9",
+    "ty>=0.0.28",
+]
+
+
