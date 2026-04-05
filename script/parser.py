@@ -2,11 +2,11 @@ import json
 import re
 
 import pandas as pd
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup,Tag
 from pathlib import Path
+from typing import Optional, List
 
-
-def run_extraction_helper(script: Path, var: str):
+def run_extraction_helper(script: List[Tag], var: str)->str:
     temp = ""
     for s in script:
         text = s.get_text()
@@ -16,7 +16,7 @@ def run_extraction_helper(script: Path, var: str):
     return temp
 
 
-def retrive_all_script_tags(content: str) -> list:
+def retrive_all_script_tags(content: str) -> Optional[List[Tag]]:
     """
     retrive the raw HTML file and extract the relevent script tag
     #IMP var to consider
@@ -34,22 +34,20 @@ def retrive_all_script_tags(content: str) -> list:
     return script
 
 
-def extract_data_primary(script_path: Path) -> json:
+def extract_data_primary(script_path: List[Tag]) ->  Optional[str]:
     """Extracts  et.rsStat.primaryData from the script
     originally is in js object converts to json"""
     # NOTE Delay Average is in minutes the site rounds it
 
-    primaryData = ""
     temp = run_extraction_helper(script_path, "primaryData")
     primaryData = re.search(r"et\.rsStat\.primaryData\s*=\s*(\[.*?\]);", temp)
-    primary = primaryData.group(1)
-    if not primary:
+    if not primaryData:
         return None
-    primary = primary.replace("'", '"')
+    primary = primaryData.group(1).replace("'", '"')
     return primary
 
 
-def convert_to_csv_primary(json_data: dict, csv_path: Path) -> None:
+def convert_to_csv_primary(json_data: str, csv_path: Path) -> None:
     data = json.loads(json_data)
     # in list evry items are getting treated as rows had to manually give column names a sifrst row
     df = pd.DataFrame(data[1:], columns=data[0])
@@ -59,16 +57,16 @@ def convert_to_csv_primary(json_data: dict, csv_path: Path) -> None:
     df.to_csv(f"{csv_path}/primary.csv", index=False)
 
 
-def extract_data_time_series(script_path: Path) -> json:
+def extract_data_time_series(script_path: List[Tag]) ->  Optional[str]:
     """Extracts  et.rsStat.tooltipData from the script
     originally is in js object converts to json"""
 
     temp = run_extraction_helper(script_path, "tooltipData")
     tooltipData = re.search(r"et\.rsStat\.tooltipData\s*=\s*(\[[\s\S]*?\]);", temp)
-    tooltip = tooltipData.group(1)
-    if not tooltip:
+    if not tooltipData:
         return None
-
+    
+    tooltip = tooltipData.group(1)
     def fix_date(match):
         y, m, d = map(int, match.groups())
         return f'"{y}-{m + 1:02d}-{d:02d}"'  # fix month as js month stars at 0
@@ -78,7 +76,7 @@ def extract_data_time_series(script_path: Path) -> json:
     return tooltip
 
 
-def convert_to_csv_time_series(json_data: dict, csv_path: Path) -> None:
+def convert_to_csv_time_series(json_data: str, csv_path: Path) -> None:
     data = json.loads(json_data)
     header = data[0]
     # have to manually set the columns
@@ -98,8 +96,9 @@ def parser(html_file_path: Path, raw_csv_path: Path) -> None:
             continue
 
         content = html_file.read_text()
-        data = retrive_all_script_tags(content)
-
+        scripts = retrive_all_script_tags(content)
+        if scripts is None:
+            continue
         train_no = html_file.stem.split("_")[-1]
         # make a train_no dir if not exist in /data
 
@@ -107,15 +106,16 @@ def parser(html_file_path: Path, raw_csv_path: Path) -> None:
         if train_dir.exists():
             print(f"{train_dir} already exits")
             continue
+
         train_dir.mkdir(parents=True, exist_ok=True)
 
-        primary = extract_data_primary(data)
+        primary = extract_data_primary(scripts)
         if primary:
             convert_to_csv_primary(primary, train_dir)
         else:
             print(f"[WARN] No state_name data for train {train_no}")
 
-        time_series = extract_data_time_series(data)
+        time_series = extract_data_time_series(scripts)
         if time_series:
             convert_to_csv_time_series(time_series, train_dir)
         else:
@@ -124,5 +124,3 @@ def parser(html_file_path: Path, raw_csv_path: Path) -> None:
         print("------ Parsing Completed ------")
 
 
-if __name__ == "__main__":
-    parser(Path("data/raw_html"))

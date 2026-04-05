@@ -49,6 +49,11 @@ if __name__ == "__main__":
                 train_parsed_path = parsed_csv_path / train_dir.stem
                 train_parsed_path.mkdir(parents=True, exist_ok=True)
                 output_file = train_parsed_path / "primary.csv"
+                if output_file.exists():
+                    print(f"Skipping {output_file} already exist")
+                    continue
+
+                print("Parsed raw file")
                 print(f"[INFO] Saving: {train_parsed_path}")
                 df.to_csv(output_file, index=False)
             else:
