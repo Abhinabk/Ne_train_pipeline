@@ -1,5 +1,6 @@
 from config import train_info
 from script import scraper, parser, parse_raw_csv
+from api import get_weather_data as gwd
 import time
 import random
 from pathlib import Path
@@ -10,6 +11,7 @@ if __name__ == "__main__":
     raw_csv_path = path / "data/raw_csv"
     train_config_path = path / "config/trains.json"
     parsed_csv_path = path / "data/parsed_csv"
+    train_geo_location =path/ "train_geo_location/india_railway_stations.geojson"
 
     # create path if not exist
     raw_html_path.mkdir(parents=True, exist_ok=True)
@@ -40,7 +42,7 @@ if __name__ == "__main__":
 
     # parser call
     parser.parser(raw_html_path, raw_csv_path)
-    # fix column of primary.csv but processing both files to /parsed_csv
+    # fixing column of primary.csv but processing both files to /parsed_csv
     for train_dir in raw_csv_path.iterdir():
         if train_dir.is_dir():
 
@@ -79,6 +81,9 @@ if __name__ == "__main__":
             else:
                 print(f"[WARN] Skipped: {file_primary.name}")
 
+    #build weather dataset
+    outut_path = Path("data/weather")
+    gwd.build_weather_dataset(raw_csv_path,train_geo_location,outut_path)
 
 
 
