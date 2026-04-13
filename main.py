@@ -1,58 +1,46 @@
 from config import train_info
 from script import scraper, parser, parse_raw_csv
 from api import get_weather_data as gwd
+from pipeline import Pipeline
 import time
 import random
 from pathlib import Path
 
-if __name__ == "__main__":
-    path = Path.cwd()
-    raw_html_path = path / "data/raw_html"
-    raw_csv_path = path / "data/raw_csv"
-    train_config_path = path / "config/trains.json"
-    parsed_csv_path = path / "data/parsed_csv"
-    train_geo_location =path/ "train_geo_location/india_railway_stations.geojson"
+def main():
+ # paths
+    path = Path(__file__).parent
+    paths = {
+        "raw_html_path": path / "data/raw_html",
+        "raw_csv_path": path / "data/raw_csv",
+        "train_config_path": path / "config/trains.json",
+        "parsed_csv_path": path / "data/parsed_csv",
+        "train_geo_location": path
+        / "train_geo_location"/"india_railway_stations.geojson",
+    }
 
     # create path if not exist
-    raw_html_path.mkdir(parents=True, exist_ok=True)
-    raw_csv_path.mkdir(parents=True, exist_ok=True)
+    paths["raw_html_path"].mkdir(parents=True, exist_ok=True)
+    paths["raw_csv_path"].mkdir(parents=True, exist_ok=True)
+  
+    train_data = train_info.get_train_info(paths["train_config_path"])
 
-    train_info = train_info.get_train_info(train_config_path)
-    duration = "1y"
-    fetched_flag = False
-
-    for train_num, train_name in train_info.items():
-        p = raw_html_path / f"{train_name}_{train_num}.html"
-        if p.exists():
-            print(f"{train_name}-{train_num}.html already present skipping ...")
-            continue
-        print(f"Fetching {train_name}-{train_num}...")
-
-        # scraper call
-        html = scraper.fetch(train_num, train_name, duration, raw_html_path)
-        fetched_flag = True
-        delay = random.uniform(2, 4)
-        print(f"sleeping for {delay:.2f}s")
-        time.sleep(delay)
-
-    if fetched_flag:
-        print("\n Fetch completed successfully. Ready for parsing!")
-    else:
-        print("\n nothing fetched (all files already exist)")
-
-    # parser call
+     #create pipeline object
+    pipeline = Pipeline(paths)
+    pipeline.run(train_data)
+    return
+       # parser call
     parser.parser(raw_html_path, raw_csv_path)
     # fixing column of primary.csv but processing both files to /parsed_csv
     for train_dir in raw_csv_path.iterdir():
         if train_dir.is_dir():
-
             file_primary = train_dir / "primary.csv"
             file_time_series = train_dir / "time_series.csv"
 
-            df_primary = parse_raw_csv.process_raw_csv(file_primary,"Avg Delay (in min)",-1)
-            df_time_series = parse_raw_csv.process_raw_csv(file_time_series,None,None)
+            df_primary = parse_raw_csv.process_raw_csv(
+                file_primary, "Avg Delay (in min)", -1
+            )
+            df_time_series = parse_raw_csv.process_raw_csv(file_time_series, None, None)
 
-            
             if df_primary is not None:
                 train_parsed_path = parsed_csv_path / train_dir.stem
                 train_parsed_path.mkdir(parents=True, exist_ok=True)
@@ -81,10 +69,9 @@ if __name__ == "__main__":
             else:
                 print(f"[WARN] Skipped: {file_primary.name}")
 
-    #build weather dataset
-    outut_path = Path("data/weather")
-    gwd.build_weather_dataset(raw_csv_path,train_geo_location,outut_path)
+    # build weather dataset
+    output_path = Path("data/weather")
+    gwd.build_weather_dataset(raw_csv_path, train_geo_location, output_path)
 
-
-
-
+if __name__ == "__main__":
+  main() 

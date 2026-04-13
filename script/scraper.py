@@ -36,7 +36,7 @@ def fetch(train_no: str, train_name: str, time: str, path: Path) -> None:
         response.raise_for_status()  # will raise the exception if bad status
         # Save the raw HTML
         with open(
-            f"{path}/{train_name}_{train_no}.html",
+            f"{path}",
             "w",
             encoding="utf-8",
         ) as f:
@@ -45,4 +45,5 @@ def fetch(train_no: str, train_name: str, time: str, path: Path) -> None:
         print(f"HTML successfully saved to {path}/{train_name}_{train_no}.html")
 
     except Exception as e:
-        print(f"Error fetching {e}")
+        print(f"Error fetching {train_name}-{train_no}: {e}")
+        raise
