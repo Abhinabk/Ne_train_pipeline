@@ -26,14 +26,18 @@ def get_coords(station_code: str, path_to_geo_loc: Path) -> dict | None:
         return None
 
 
-def get_longitude_latitude(path_to_raw_csv: Path, path_to_geo_loc: Path) -> dict:
+def get_longitude_latitude(path_to_parsed_csv: Path, path_to_geo_loc: Path) -> dict:
     """return the long and latitude of first station of the journey"""
     lon_lat = {}
-    for csv_file in path_to_raw_csv.rglob("*.csv"):
+    for csv_file in path_to_parsed_csv.rglob("*.csv"):
         if csv_file.stem == "primary":
-            station_name = get_station_codes(csv_file)[0]
+            stations = get_station_codes(csv_file)
+            if stations.empty:
+                continue
+            station_name = stations[0]
             df = pd.read_csv(csv_file)
             train_no = str(df["Train"].iloc[0])
-            lon_lat[train_no] = get_coords(station_name, path_to_geo_loc)
+            if train_no not in lon_lat:
+                lon_lat[train_no] = get_coords(station_name, path_to_geo_loc)
 
     return lon_lat

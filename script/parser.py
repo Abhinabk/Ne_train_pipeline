@@ -50,7 +50,7 @@ def extract_data_primary(script_path: List[Tag]) -> str | None:
 
 def convert_to_csv_primary(json_data: str, csv_path: Path) -> None:
     data = json.loads(json_data)
-    # in list evry items are getting treated as rows had to manually give column names a sifrst row
+    # in list evry items are getting treated as rows had to manually give column names as first row
     df = pd.DataFrame(data[1:], columns=data[0])
     # assuimng csv_path will always have train no at the end
     train_no = csv_path.stem
@@ -104,7 +104,7 @@ def parser(html_file_path: Path, raw_csv_path: Path) -> None:
 
         train_dir = raw_csv_path / train_no
         if train_dir.exists():
-            print(f"{train_dir} already exits")
+            # print(f"{train_dir} already exits")
             continue
 
         train_dir.mkdir(parents=True, exist_ok=True)
@@ -121,4 +121,3 @@ def parser(html_file_path: Path, raw_csv_path: Path) -> None:
         else:
             print(f"[WARN] No state_name data for train {train_no}")
 
-        print("------ Parsing Completed ------")

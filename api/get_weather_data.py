@@ -28,7 +28,7 @@ def fetch_weather_daily(
             "relative_humidity_2m_mean",
         ],
     }
-    response = requests.get(url=url, params=params)
+    response = requests.get(url=url, params=params, timeout=15)
     response.raise_for_status()
     weather_data = response.json()
     print(f"Fetching train {train_no}")
@@ -40,7 +40,9 @@ def flatten_weather_data(weather_data: list[dict]) -> list[dict]:
 
     for train in weather_data:
         train_no = train["train_no"]
-        daily = train["weather"]["daily"]
+        daily = train.get("weather", {}).get("daily")
+        if not daily:
+            continue
 
         for i in range(len(daily["time"])):
             rows.append(
@@ -63,34 +65,33 @@ def flatten_weather_data(weather_data: list[dict]) -> list[dict]:
 
 
 def build_weather_dataset(
-    path_to_raw_csv_folder: Path, path_to_geo_loc_csv: Path, output_path
+    parsed_csv_path: Path, path_to_geo_loc_csv: Path, output_path
 ) -> None:
-    # path_to_raw_csv = Path("data/parsed_csv/")
-    # path_to_geo_loc = Path("train_geo_location/india_railway_stations.geojson")
 
-    long_lat = get_location.get_longitude_latitude(
-        path_to_raw_csv_folder, path_to_geo_loc_csv
-    )
-    min_max_date = get_min_max_date.get_min_max_time(path_to_raw_csv_folder)
+    long_lat = get_location.get_longitude_latitude(parsed_csv_path, path_to_geo_loc_csv)
+    min_max_date = get_min_max_date.get_min_max_time(parsed_csv_path)
     path_to_weather_file = output_path / "weather_clean.csv"
 
-    if path_to_weather_file.exists():
-        print(f"[INFO] file {path_to_weather_file} already exist skipping")
+    if path_to_weather_file.is_file():
+        print(f"[SKIP] weather/{path_to_weather_file.name}")
     else:
         weather_data = []
         print("Fetching weather data from API...")
-        for train in long_lat.items():
-            long = train[1]["long"]
-            lat = train[1]["lat"]
-            start_date = min_max_date[train[0]][0]
-            end_date = min_max_date[train[0]][1]
-            train_no = train[0]
+        for train_no, data in long_lat.items():
+            long = data["long"]
+            lat = data["lat"]
+            if train_no not in min_max_date:
+                print(f"[WARN] Missing date for {train_no}")
+                continue
+
+            start_date = min_max_date[train_no]
+            end_date = min_max_date[train_no]
 
             try:
                 data = fetch_weather_daily(train_no, lat, long, start_date, end_date)
                 weather_data.append(data)
             except Exception as e:
-                print(f"[WARN] Train {train_no} failed \nStatus error {e}")
+                print(f"[WARN] [{train_no}] API failed: {e}")
 
         rows = flatten_weather_data(weather_data)
         df = pd.DataFrame(rows)
