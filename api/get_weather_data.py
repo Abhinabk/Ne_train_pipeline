@@ -77,30 +77,33 @@ def build_weather_dataset(
     else:
         weather_data = []
         print("Fetching weather data from API...")
-        for train_no, data in long_lat.items():
-            long = data["long"]
-            lat = data["lat"]
+        for train_no, coord in long_lat.items():
+            long = coord["long"]
+            lat = coord["lat"]
             if train_no not in min_max_date:
                 print(f"[WARN] Missing date for {train_no}")
                 continue
 
-            start_date = min_max_date[train_no]
-            end_date = min_max_date[train_no]
+            start_date,end_date = min_max_date[train_no]
 
             try:
                 data = fetch_weather_daily(train_no, lat, long, start_date, end_date)
                 weather_data.append(data)
+                print(f"[LOG] Fetched weather for train: {train_no}")
             except Exception as e:
                 print(f"[WARN] [{train_no}] API failed: {e}")
 
         rows = flatten_weather_data(weather_data)
+        if not rows:
+            print("[WARN] No weather data collected")
+            return
         df = pd.DataFrame(rows)
         df.to_csv(path_to_weather_file, index=False)
 
 
 if __name__ == "__main__":
     output_path = "data/weather_clean.csv"
-    path_to_raw_csv_folder = Path("data/parsed_csv/")
-    path_to_geo_loc_csv = Path("train_geo_location/india_railway_stations.geojson")
+    parsed_csv_path = Path("data/parsed_csv/")
+    geo_loc_csv_path = Path("train_geo_location/india_railway_stations.geojson")
 
-    build_weather_dataset(path_to_raw_csv_folder, path_to_geo_loc_csv, output_path)
+    build_weather_dataset(parsed_csv_path, geo_loc_csv_path, output_path)

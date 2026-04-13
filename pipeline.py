@@ -112,8 +112,6 @@ class Pipeline:
         raw_csv_path = self.paths["parsed_csv_path"]
         train_geo_location = self.paths["train_geo_location"]
         output_path = self.paths["api_data_path"]
-        output_path.mkdir(parents=True, exist_ok=True)
-
         gwd.build_weather_dataset(
                 raw_csv_path, 
                 train_geo_location, 

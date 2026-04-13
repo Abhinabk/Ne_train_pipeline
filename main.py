@@ -14,16 +14,19 @@ def main():
 
     }
 
-    # create path if not exist
+    # create path if not exist for saving 
     paths["raw_html_path"].mkdir(parents=True, exist_ok=True)
     paths["raw_csv_path"].mkdir(parents=True, exist_ok=True)
+    paths["parsed_csv_path"].mkdir(parents=True, exist_ok=True)
+    paths["api_data_path"].mkdir(parents=True, exist_ok=True)
   
     train_data = train_info.get_train_info(paths["train_config_path"])
 
      #create pipeline object
     pipeline = Pipeline(paths)
+    print("----- PIPELINE START -----")
     pipeline.run(train_data)
-    return
+    print("----- PIPELINE END -----")
 
 if __name__ == "__main__":
   main() 

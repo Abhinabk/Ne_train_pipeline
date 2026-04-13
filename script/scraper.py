@@ -42,7 +42,7 @@ def fetch(train_no: str, train_name: str, time: str, path: Path) -> None:
         ) as f:
             f.write(response.text)
 
-        print(f"HTML successfully saved to {path}/{train_name}_{train_no}.html")
+        # print(f"HTML successfully saved to {path}/{train_name}_{train_no}.html")
 
     except Exception as e:
         print(f"Error fetching {train_name}-{train_no}: {e}")
