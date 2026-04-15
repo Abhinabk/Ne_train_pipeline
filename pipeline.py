@@ -1,5 +1,5 @@
 from pathlib import Path
-from script import scraper, parser, parse_raw_csv
+from script import scraper, parser, parse_raw_csv, merge_to_processed
 from api import get_weather_data as gwd
 import time
 import random
@@ -117,12 +117,16 @@ class Pipeline:
                 train_geo_location, 
                 output_path
         )
+    def build_processed(self):
+        merge_to_processed.process(self.paths["parsed_csv_path"],self.paths["processed_csv_path"])
+        merge_to_processed.process_weather(self.paths["api_data_path"],self.paths["processed_csv_path"])
 
     def run(self, train_data, duration="1y"):
         print("------ FETCH ------")
         self.fetch(train_data, duration)
         print("------ PARSE ------")
         self.parse()
-        # self.process_csv()
         print("------ WEATHER ------")
         self.build_weather()
+        print("------ PROCESSED ------")
+        self.build_processed()

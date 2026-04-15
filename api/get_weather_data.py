@@ -70,7 +70,7 @@ def build_weather_dataset(
 
     long_lat = get_location.get_longitude_latitude(parsed_csv_path, path_to_geo_loc_csv)
     min_max_date = get_min_max_date.get_min_max_time(parsed_csv_path)
-    path_to_weather_file = output_path / "weather_clean.csv"
+    path_to_weather_file = output_path / "weather.csv"
 
     if path_to_weather_file.is_file():
         print(f"[SKIP] weather/{path_to_weather_file.name}")

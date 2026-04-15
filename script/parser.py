@@ -120,4 +120,3 @@ def parser(html_file_path: Path, raw_csv_path: Path) -> None:
             convert_to_csv_time_series(time_series, train_dir)
         else:
             print(f"[WARN] No state_name data for train {train_no}")
-

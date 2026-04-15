@@ -4,7 +4,8 @@
 3. Clean up main.py
 ## MAJOR:
 1. ~~Integrate weather API (evaluate: OpenWeather, Meteostat)~~
-2.~~Map timestamps → weather data~~
+2. ~~Map timestamps → weather data~~
+3. Have to caonvert from wide to long format time_series.csv cant proceed further without it messing with concat
 3. Do analysis on the weather file
 4. Add a DAG engine and vizualizer
 

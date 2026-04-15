@@ -5,13 +5,13 @@ from pathlib import Path
 def main():
     path = Path(__file__).parent
     paths = {
-        "raw_html_path": path / "data/raw_html",
-        "raw_csv_path": path / "data/raw_csv",
+        "raw_html_path": path / "data"/"raw"/"raw_html",
+        "raw_csv_path": path / "data"/"raw"/"raw_csv",
         "train_config_path": path / "config/trains.json",
-        "parsed_csv_path": path / "data/parsed_csv",
+        "parsed_csv_path": path / "data"/"raw"/"parsed_csv",
         "train_geo_location": path / "train_geo_location"/"india_railway_stations.geojson",
-        "api_data_path":  path/"data"/"weather"
-
+        "api_data_path":  path/"data"/"raw"/"weather",
+        "processed_csv_path": path/"data"/"processed"
     }
 
     # create path if not exist for saving 
