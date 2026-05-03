@@ -45,19 +45,20 @@ def flatten_weather_data(weather_data: list[dict]) -> list[dict]:
             continue
 
         for i in range(len(daily["time"])):
+            #TODO loosing column name info here better to use full name will fix later
             rows.append(
-                {
+                {   
                     "train_no": train_no,
                     "date": daily["time"][i],
-                    "temp_max": daily["temperature_2m_max"][i],
-                    "temp_min": daily["temperature_2m_min"][i],
-                    "temp_mean": daily["temperature_2m_mean"][i],
+                    "temperature_2m_max": daily["temperature_2m_max"][i],
+                    "temperature_2m_min": daily["temperature_2m_min"][i],
+                    "temperature_2m_mean": daily["temperature_2m_mean"][i],
                     "precipitation_sum": daily["precipitation_sum"][i],
                     "rain_sum": daily["rain_sum"][i],
-                    "wind_speed": daily["wind_speed_10m_max"][i],
-                    "wind_gust": daily["wind_gusts_10m_max"][i],
-                    "humidity": daily["relative_humidity_2m_mean"][i],
-                    "weathercode": daily["weather_code"][i],
+                    "wind_speed_10m_max": daily["wind_speed_10m_max"][i],
+                    "wind_gusts_10m_max": daily["wind_gusts_10m_max"][i],
+                    "relative_humidity_2m_mean": daily["relative_humidity_2m_mean"][i],
+                    "weather_code": daily["weather_code"][i]
                 }
             )
 
