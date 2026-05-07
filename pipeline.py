@@ -1,5 +1,5 @@
 from pathlib import Path
-from script import scraper, parser, parse_raw_csv, merge_to_processed
+from script import scraper, parser, parse_raw_csv, merge_to_processed,create_db
 from api import get_weather_data as gwd
 import time
 import random
@@ -120,6 +120,14 @@ class Pipeline:
     def build_processed(self):
         merge_to_processed.process(self.paths["parsed_csv_path"],self.paths["processed_csv_path"])
         merge_to_processed.process_weather(self.paths["api_data_path"],self.paths["processed_csv_path"])
+    def build_db(self):
+        processed_ts_path = self.paths["processed_csv_path"]/"time_series.csv"
+        if processed_ts_path.exists():
+            print("Creating the databse ")
+            create_db.create_database(self.paths["database_path"],processed_ts_path)
+        else:
+            print(f"[WARN] WRONG PATH {processed_ts_path}")
+        
 
     def run(self, train_data, duration="1y"):
         print("------ FETCH ------")
@@ -130,3 +138,5 @@ class Pipeline:
         self.build_weather()
         print("------ PROCESSED ------")
         self.build_processed()
+        print("------ DATABASE------")
+        self.build_db()
