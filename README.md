@@ -12,4 +12,3 @@
 
 # DATA
 1. The data in time_series.csv signifies delay in minutes 
-2. The data in primary.csv signifies no of time delay happened where avg can be found by divding that number by no of non null rows which indicates total running for last year

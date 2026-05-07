@@ -14,9 +14,11 @@ def create_database(path_to_db:Path,processed_ts_path:Path)->None:
         )
     """)
 
+    before = con.execute("SELECT COUNT(*) FROM train_delay").fetchone()
+    before = before[0] if before else 0
 
     con.execute(f"""
-        INSERT OR IGNORE INTO train_delay
+        INSERT OR REPLACE INTO train_delay
         SELECT 
             Train, 
             Date::DATE, 
@@ -24,10 +26,14 @@ def create_database(path_to_db:Path,processed_ts_path:Path)->None:
             Delay 
         FROM read_csv('{processed_ts_path}')
     """)
+    after = con.execute("SELECT COUNT(*) FROM train_delay").fetchone()
+    after = after[0] if after else 0
 
     con.sql("""
-        SELECT * from train_delay USING SAMPLE 10 ROWS
-    """).show()
+    SELECT * from train_delay USING SAMPLE 10 ROWS
+""").show()
+    print(f"[DB] Rows inserted: {after - before}")
+
     
 
 if __name__ == '__main__':

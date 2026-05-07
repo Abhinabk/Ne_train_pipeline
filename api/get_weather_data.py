@@ -66,11 +66,11 @@ def flatten_weather_data(weather_data: list[dict]) -> list[dict]:
 
 
 def build_weather_dataset(
-    parsed_csv_path: Path, path_to_geo_loc_csv: Path, output_path
+    raw_csv_path: Path, path_to_geo_loc_csv: Path, output_path:Path
 ) -> None:
 
-    long_lat = get_location.get_longitude_latitude(parsed_csv_path, path_to_geo_loc_csv)
-    min_max_date = get_min_max_date.get_min_max_time(parsed_csv_path)
+    long_lat = get_location.get_longitude_latitude(raw_csv_path, path_to_geo_loc_csv)
+    min_max_date = get_min_max_date.get_min_max_time(raw_csv_path)
     path_to_weather_file = output_path / "weather.csv"
 
     if path_to_weather_file.is_file():
@@ -103,8 +103,7 @@ def build_weather_dataset(
 
 
 if __name__ == "__main__":
-    output_path = "data/weather_clean.csv"
-    parsed_csv_path = Path("data/parsed_csv/")
+    output_path = Path("data/processed")
+    raw_csv_path = Path("data/raw/raw_csv")
     geo_loc_csv_path = Path("train_geo_location/india_railway_stations.geojson")
-
-    build_weather_dataset(parsed_csv_path, geo_loc_csv_path, output_path)
+    build_weather_dataset(raw_csv_path, geo_loc_csv_path, output_path)

@@ -21,7 +21,6 @@ def retrive_all_script_tags(content: str) -> List[Tag] | None:
     """
     retrive the raw HTML file and extract the relevent script tag
     #IMP var to consider
-    et.rsStat.primaryData -> gives the avg over a year
     et.rsStat.tooltipData -> gives day waise distribution over month
     stnname -> get tha sate name from acronyms
     """
@@ -30,32 +29,11 @@ def retrive_all_script_tags(content: str) -> List[Tag] | None:
 
     soup = BeautifulSoup(content, "html.parser")
 
-    # paarse the script tags to find the data in et.rsStat.primaryData  and et.rsStat.tooltipData
+    # paarse the script tags to find the data in  et.rsStat.tooltipData
     script = soup.find_all("script")  # will return a list of scripts
     return script
 
 
-def extract_data_primary(script_path: List[Tag]) -> str | None:
-    """Extracts  et.rsStat.primaryData from the script
-    originally is in js object converts to json"""
-    # NOTE Delay Average is in minutes the site rounds it
-
-    temp = run_extraction_helper(script_path, "primaryData")
-    primaryData = re.search(r"et\.rsStat\.primaryData\s*=\s*(\[.*?\]);", temp)
-    if not primaryData:
-        return None
-    primary = primaryData.group(1).replace("'", '"')
-    return primary
-
-
-def convert_to_csv_primary(json_data: str, csv_path: Path) -> None:
-    data = json.loads(json_data)
-    # in list evry items are getting treated as rows had to manually give column names as first row
-    df = pd.DataFrame(data[1:], columns=data[0])
-    # assuimng csv_path will always have train no at the end
-    train_no = csv_path.stem
-    df.insert(0, "Train", train_no)
-    df.to_csv(f"{csv_path}/primary.csv", index=False)
 
 
 def extract_data_time_series(script_path: List[Tag]) -> str | None:
@@ -103,17 +81,8 @@ def parser(html_file_path: Path, raw_csv_path: Path) -> None:
         # make a train_no dir if not exist in /data
 
         train_dir = raw_csv_path / train_no
-        if train_dir.exists():
-            # print(f"{train_dir} already exits")
-            continue
-
+       
         train_dir.mkdir(parents=True, exist_ok=True)
-
-        primary = extract_data_primary(scripts)
-        if primary:
-            convert_to_csv_primary(primary, train_dir)
-        else:
-            print(f"[WARN] No state_name data for train {train_no}")
 
         time_series = extract_data_time_series(scripts)
         if time_series:

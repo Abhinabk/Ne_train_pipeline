@@ -1,9 +1,9 @@
 from pathlib import Path
-from script import scraper, parser, parse_raw_csv, merge_to_processed,create_db
+from script import scraper, parser, merge_to_processed,create_db
 from api import get_weather_data as gwd
 import time
 import random
-
+from datetime import datetime,date
 
 class Pipeline:
     def __init__(self, paths: dict[str, Path]):
@@ -21,11 +21,14 @@ class Pipeline:
             )
             if raw_html_path.is_file():
                 # get a proper logger here
-                print(f"[SKIP] {train_name}-{train_num}.html already present")
-                skipped_count += 1
-                continue
-            print(f"Fetching {train_name}-{train_num}...")
+                #raw_html_path.stat().st_mtime (seconds since Jan 1, 1970)
+                fetched_date = datetime.fromtimestamp(raw_html_path.stat().st_mtime).date()
+                if fetched_date == date.today():
+                    print(f"[SKIP] {train_name}-{train_num}.html already present")
+                    skipped_count += 1
+                    continue
 
+            print(f"Fetching {train_name}-{train_num}...")
             # scraper call
             try:
                 scraper.fetch(train_num, train_name, duration, raw_html_path)
@@ -41,75 +44,45 @@ class Pipeline:
      
         return {"fetched": fetched_count, "skipped": skipped_count}
 
-    def parse(self):
+    def parse(self,train_data: dict[str, str]):
         # parser call
         raw_html_path = self.paths["raw_html_path"]
         raw_csv_path = self.paths["raw_csv_path"]
-        parsed_csv_path = self.paths["parsed_csv_path"]
-        
-        saved = 0
-        skipped_exist_count = 0
-        skipped_invalid_count = 0
 
+        need_parsing = 0
+        skipped_count = 0
         # 1.HTML->Raw csv
-        parser.parser(raw_html_path, raw_csv_path)
-        # fixing column of primary.csv but processing both files to /parsed_csv
-        # 2 Raw csv -> Processed csv
-        for train_dir in raw_csv_path.iterdir():
-            if not train_dir.is_dir():
+        for train_num, _ in train_data.items():
+            raw_csv_file = self.paths["raw_csv_path"] / f"{train_num}"/ "time_series.csv"
+            if not raw_csv_file.exists():
+                need_parsing+=1
                 continue
 
-            file_primary = train_dir / "primary.csv"
-            file_time_series = train_dir / "time_series.csv"
+            fetched_date = datetime.fromtimestamp(raw_csv_file.stat().st_mtime).date()
 
-            df_primary = parse_raw_csv.process_raw_csv(
-                file_primary, "Avg Delay (in min)", -1
-            )
-            df_time_series = parse_raw_csv.process_raw_csv(file_time_series, None, None)
-
-            # making a path to store csv in each train no individually
-            train_parsed_path = parsed_csv_path / train_dir.stem
-            train_parsed_path.mkdir(parents=True, exist_ok=True)
-            train_id = train_dir.stem
-            # primary_csv
-            output_primary = train_parsed_path / "primary.csv"
-            if df_primary is not None:
-                if output_primary.is_file():
-                    #skips the csv
-                    skipped_exist_count+=1
-                    print(f"[SKIP] {train_id}/primary.csv already exists")
-                else:
-                    saved+=1
-                    print(f"[INFO] Saving: {train_id}/primary.csv")
-                    df_primary.to_csv(output_primary, index=False)
+            if fetched_date == date.today():
+                skipped_count+=1
             else:
-                #skips the invalid html
-                skipped_invalid_count+=1
-                print(f"[WARN] [{train_id}] Skipped: {file_primary.name}")
+                need_parsing+=1
 
-            # time_series_csv
-            output_ts = train_parsed_path / "time_series.csv"
-            if df_time_series is not None:
-                if output_ts.is_file():
-                    skipped_exist_count+=1
-                    print(f"[SKIP] {train_id}/time_series.csv already exists")
-                else:
-                    saved+=1
-                    print(f"[INFO] Saving: {train_id}/time_series.csv")
-                    df_time_series.to_csv(output_ts, index=False)
-            else:
-                skipped_invalid_count+=1
-                print(f"[WARN] [{train_id}] Skipped: {file_time_series.name}")
+        if need_parsing == 0:
+            print("\n[SUMMARY]")
+            print("[SKIP] All trains already parsed today")
+            print("Saved: 0")
+            print(f"Skipped: {skipped_count}")
+
+            return
+        
+        print(f"[PARSING] Rebuilding {need_parsing} train(s)")
+        parser.parser(raw_html_path, raw_csv_path)
 
         print("\n[SUMMARY]")
-        print(f"Saved: {saved}")
-        print(f"Skipped (existing): {skipped_exist_count}")
-        print(f"Skipped (invalid): {skipped_invalid_count}")
+        print(f"Saved: {need_parsing}")
+        print(f"Skipped: {skipped_count}")
 
-    # def process_csv(self): ...
 
     def build_weather(self):
-        raw_csv_path = self.paths["parsed_csv_path"]
+        raw_csv_path = self.paths["raw_csv_path"]
         train_geo_location = self.paths["train_geo_location"]
         output_path = self.paths["api_data_path"]
         gwd.build_weather_dataset(
@@ -117,9 +90,13 @@ class Pipeline:
                 train_geo_location, 
                 output_path
         )
+        print("DONE \n")
+
     def build_processed(self):
-        merge_to_processed.process(self.paths["parsed_csv_path"],self.paths["processed_csv_path"])
+        merge_to_processed.process(self.paths["raw_csv_path"],self.paths["processed_csv_path"])
         merge_to_processed.process_weather(self.paths["api_data_path"],self.paths["processed_csv_path"])
+        print("DONE \n")
+
     def build_db(self):
         processed_ts_path = self.paths["processed_csv_path"]/"time_series.csv"
         if processed_ts_path.exists():
@@ -133,7 +110,7 @@ class Pipeline:
         print("------ FETCH ------")
         self.fetch(train_data, duration)
         print("------ PARSE ------")
-        self.parse()
+        self.parse(train_data)
         print("------ WEATHER ------")
         self.build_weather()
         print("------ PROCESSED ------")
