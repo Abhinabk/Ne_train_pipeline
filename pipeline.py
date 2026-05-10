@@ -91,21 +91,18 @@ class Pipeline:
                 output_path
         )
         print("DONE \n")
-
+    
     def build_processed(self):
         merge_to_processed.process(self.paths["raw_csv_path"],self.paths["processed_csv_path"])
         merge_to_processed.process_weather(self.paths["api_data_path"],self.paths["processed_csv_path"])
         print("DONE \n")
 
     def build_db(self):
-        processed_ts_path = self.paths["processed_csv_path"]/"time_series.csv"
-        if processed_ts_path.exists():
-            print("Creating the databse ")
-            create_db.create_database(self.paths["database_path"],processed_ts_path)
-        else:
-            print(f"[WARN] WRONG PATH {processed_ts_path}")
         
-
+        print("Creating the database")
+        create_db.create_database(self.paths["database_path"],
+                                  self.paths['path_to_train'],self.paths['path_to_weather'])
+        
     def run(self, train_data, duration="1y"):
         print("------ FETCH ------")
         self.fetch(train_data, duration)

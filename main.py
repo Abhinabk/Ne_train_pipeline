@@ -11,7 +11,9 @@ def main():
         "train_geo_location": path / "train_geo_location"/"india_railway_stations.geojson",
         "api_data_path":  path/"data"/"raw"/"weather",
         "processed_csv_path": path/"data"/"processed",
-        "database_path": path/"data"/"database"
+        "database_path": path/"data"/"database",
+        "path_to_train": path/"data"/"processed"/"time_series.csv",
+        "path_to_weather": path/"data"/"processed"/"weather.csv"
     }
 
     # create path if not exist for saving 
@@ -20,6 +22,8 @@ def main():
     paths["api_data_path"].mkdir(parents=True, exist_ok=True)
     paths["processed_csv_path"].mkdir(parents=True, exist_ok=True)
     paths["database_path"].mkdir(parents=True, exist_ok=True)
+    paths["path_to_train"].mkdir(parents=True, exist_ok=True)
+    paths["path_to_weather"].mkdir(parents=True, exist_ok=True)
     
   
     train_data = train_info.get_train_info(paths["train_config_path"])
