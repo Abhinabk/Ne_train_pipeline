@@ -70,7 +70,6 @@ class Pipeline:
             print("[SKIP] All trains already parsed today")
             print("Saved: 0")
             print(f"Skipped: {skipped_count}")
-
             return
         
         print(f"[PARSING] Rebuilding {need_parsing} train(s)")
@@ -83,7 +82,7 @@ class Pipeline:
 
     def build_weather(self):
         raw_csv_path = self.paths["raw_csv_path"]
-        train_geo_location = self.paths["train_geo_location"]
+        train_geo_location = self.paths["train_geo_location_json"]
         output_path = self.paths["api_data_path"]
         gwd.build_weather_dataset(
                 raw_csv_path, 
@@ -101,7 +100,8 @@ class Pipeline:
         
         print("Creating the database")
         create_db.create_database(self.paths["database_path"],
-                                  self.paths['path_to_train'],self.paths['path_to_weather'])
+                                  self.paths['path_to_train'],self.paths['path_to_weather'],
+                                  self.paths["raw_csv_path"],self.paths["train_geo_location"])
         
     def run(self, train_data, duration="1y"):
         print("------ FETCH ------")

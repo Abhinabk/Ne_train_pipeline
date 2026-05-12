@@ -11,5 +11,3 @@ tempCodeRunnerFile.py
 .venv
 # Data Folder 
 data/
-#analysis folder 
-analysis/data_quality.ipynb

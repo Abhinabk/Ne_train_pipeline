@@ -8,7 +8,7 @@ def main():
         "raw_html_path": path / "data"/"raw"/"raw_html",
         "raw_csv_path": path / "data"/"raw"/"raw_csv",
         "train_config_path": path / "config/trains.json",
-        "train_geo_location": path / "train_geo_location"/"india_railway_stations.geojson",
+        "train_geo_location_json": path / "train_geo_location"/"india_railway_stations.geojson",
         "api_data_path":  path/"data"/"raw"/"weather",
         "processed_csv_path": path/"data"/"processed",
         "database_path": path/"data"/"database",

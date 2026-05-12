@@ -2,8 +2,7 @@
 1. ~~Add type hints to all files~~
 2. ~~Add train_no as a primary column to all CSVs~~
 3. Clean up main.py
-4. ADD a func to retrive full name of station from the code names using  'train_geo_location/india_railway_stations.geojson'
-
+4. ADD 2 tables station code->station names ,Train code->Train names
 ## MAJOR:
 1. ~~Integrate weather API (evaluate: OpenWeather, Meteostat)~~
 2. ~~Map timestamps → weather data~~

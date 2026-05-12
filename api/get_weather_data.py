@@ -45,7 +45,6 @@ def flatten_weather_data(weather_data: list[dict]) -> list[dict]:
             continue
 
         for i in range(len(daily["time"])):
-            #TODO loosing column name info here better to use full name will fix later
             rows.append(
                 {   
                     "train_no": train_no,
@@ -66,10 +65,10 @@ def flatten_weather_data(weather_data: list[dict]) -> list[dict]:
 
 
 def build_weather_dataset(
-    raw_csv_path: Path, path_to_geo_loc_csv: Path, output_path:Path
+    raw_csv_path: Path, path_to_geo_loc_json: Path, output_path:Path
 ) -> None:
 
-    long_lat = get_location.get_longitude_latitude(raw_csv_path, path_to_geo_loc_csv)
+    long_lat = get_location.get_longitude_latitude(raw_csv_path, path_to_geo_loc_json)
     min_max_date = get_min_max_date.get_min_max_time(raw_csv_path)
     path_to_weather_file = output_path / "weather.csv"
 

@@ -32,7 +32,7 @@ def fetch(train_no: str, train_name: str, time: str, path: Path) -> None:
         if response.status_code in (300, 301):
             print(
                 "[WARN][REDIRECTION] Location:", response.headers.get("Location")
-            )  # where it's sending you
+            )  # where it's sending me
         response.raise_for_status()  # will raise the exception if bad status
         # Save the raw HTML
         with open(
