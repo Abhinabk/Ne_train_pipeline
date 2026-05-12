@@ -1,16 +1,18 @@
 import json
 from pathlib import Path
 import pandas as pd
-from bs4 import BeautifulSoup
 from difflib import SequenceMatcher
-import re 
-# MANUAL_COORDS = {
-#     "DDU":  {"lat": 25.278149, "long": 83.11925 },  #prev mgs (mugal sarai)
-#     "PRYJ": {"lat": 25.446241, "long": 81.828816}, #still uses allahabad  in geojson dataset
-#     "NBJU": {"long": 87.0627, "lat": 25.8656},  
-#     "PCOI": {"long": 82.5685, "lat": 25.5014},  
-    
-# }
+
+MANUAL_COORDS = {
+    "DDU":  {"long": 83.11925 , "lat":25.278149 },  #prev mgs (mugal sarai)
+    "PRYJ": {"long": 81.828816 , "lat":25.446241 }, #still uses allahabad  in geojson dataset
+    "NBJU": {"long": 85.988056, "lat":  25.462222},  
+    "PCOI": {"long":  81.8672, "lat": 25.3767},  
+    "DBLG": {"long":93.085623,"lat": 25.595283 },
+    "NHLG":{"long":93.032239 ,"lat":25.1483324},
+    "JGLP":{"long":92.950867,"lat":25.111219},
+    "NHGJ":{"long":92.868056,"lat":25.112778},
+}
 def load_geo_data(path):
     try:
         with open(path, "r") as f:
@@ -20,45 +22,28 @@ def load_geo_data(path):
 def get_overlap_percentage(s1, s2):
     return SequenceMatcher(None, s1, s2).ratio()
       
-def extract_station_names_from_html(raw_html_path: Path,station_code:str) -> dict[str, str]:
-    """Extract {station_code: station_name} from already-scraped HTML files"""
-    code_to_name = {}
-    for html_file in raw_html_path.rglob("*.html"):
-        soup = BeautifulSoup(html_file.read_text(), "html.parser")
-        # matches "DIBRUGARH (DBRG)", "LUMDING JN (LMG)" etc
-        for text in soup.stripped_strings:
-            match = re.search(rf"(.+?)\(({station_code})\)", text)
-            if match:
-                name = match.group(1).strip().upper()
-                code = match.group(2).strip()
-                code_to_name[code] = name
-    return code_to_name
 
 
 
-def get_coords(raw_html_path:Path,station_code: str,geo_data: dict) -> dict | None:
+def get_coords(station_code: str,geo_data: dict) -> dict | None:
     """return longitude and latitude"""
-    code_to_name = extract_station_names_from_html(raw_html_path, station_code)
-    station_name = code_to_name.get(station_code, "").upper()
-
-    if not station_name:
-        print(f"[WARN] {station_code} not found in any HTML file")
-        return None
-    
+ 
+    return_dict = {}
     for feature in geo_data["features"]:
-        geo_name = feature["properties"]["name"].upper()
-        if station_name in geo_name:
-            lon, lat = feature["geometry"]["coordinates"]
-            return {"Station_code": station_code, "longitude": lon, "latitude": lat}
+        prop = feature["properties"]
+        if prop.get("code") == station_code:
+            return_dict["Station_code"] = station_code
+            return_dict["long"] = prop["long"]
+            return_dict["lat"] = prop["lat"]
+            return return_dict
         
-        elif get_overlap_percentage(station_name, geo_name)>0.5:
-            lon, lat = feature["geometry"]["coordinates"]
-            return {"Station_code": station_code, "longitude": lon, "latitude": lat}
-    
-    print(f"[WARN] {station_code} ({station_name}) not found in GeoJSON")
+    if station_code in MANUAL_COORDS:
+        print(f"[FALLBACK] Using manual coords for {station_code}")
+        return {"Station_code": station_code, **MANUAL_COORDS[station_code]}
+    print(f"{station_code} not found")
     return None
 
-def get_longitude_latitude(path_to_raw_csv: Path, raw_html_path:Path,path_to_geo_loc_json: Path) -> dict:
+def get_longitude_latitude(path_to_raw_csv: Path,path_to_geo_loc_json: Path,output_path:Path) -> None:
     """return the long and latitude of all station of the journey
     GeoJSON coordinate order is: [longitude, latitude]
 
@@ -67,24 +52,25 @@ def get_longitude_latitude(path_to_raw_csv: Path, raw_html_path:Path,path_to_geo
     """
     geo_data = load_geo_data(path_to_geo_loc_json)
     if not geo_data:
-        return {}
-    
+        return None
+
     all_coords = {}
     for csv_file in path_to_raw_csv.rglob("time_series.csv"):
-        df = pd.read_csv(csv_file,nrows=0)
-        stations = df.drop(columns=['Train','Date']).columns.tolist()
+        df = pd.read_csv(csv_file, nrows=0)
+        stations = df.drop(columns=['Train', 'Date']).columns.tolist()
         for station_code in stations:
             if station_code not in all_coords:
-                coords = get_coords(raw_html_path,station_code, geo_data)
+                coords = get_coords(station_code, geo_data)
                 if coords:
                     all_coords[station_code] = coords
                 else:
                     print(f"[WARN] No coords for {station_code}")
-
-    return all_coords
+    df = pd.DataFrame(all_coords.values()).reset_index(drop=True)
+    df.to_csv(output_path/"station_coordinates.csv")
 
 if __name__ == "__main__":
     raw_csv_path = Path("data/raw/raw_csv")
-    path_to_geo_loc_json = Path("train_geo_location/Railway_Station.geojson")
+    path_to_geo_loc_json = Path("train_geo_location/india_railway_stations.geojson")
     raw_html_path = Path("data/raw/raw_html")
-    print(get_longitude_latitude(raw_csv_path,raw_html_path,path_to_geo_loc_json))
+    output_path = Path("data/processed")
+    get_longitude_latitude(raw_csv_path,path_to_geo_loc_json,output_path)
