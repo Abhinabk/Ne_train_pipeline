@@ -1,5 +1,5 @@
 from pathlib import Path
-from script import scraper, parser, merge_to_processed,create_db
+from script import scraper, parser, merge_to_processed,create_db,get_location,add_station_name
 from api import get_weather_data as gwd
 import time
 import random
@@ -79,7 +79,15 @@ class Pipeline:
         print(f"Saved: {need_parsing}")
         print(f"Skipped: {skipped_count}")
 
+    def build_station_coords(self):
+        path_to_station_coord_csv = self.paths["path_to_station_coord_csv"]
 
+        get_location.get_longitude_latitude(self.paths["path_to_raw_csv"],
+                                            self.paths["path_to_geo_loc_json"],
+                                            self.paths["processed_path"])
+        if path_to_station_coord_csv.is_file():
+            add_station_name.add_to_station_coords(path_to_station_coord_csv,
+                                               self.paths["raw_html_path"])
     def build_weather(self):
         raw_csv_path = self.paths["raw_csv_path"]
         train_geo_location = self.paths["train_geo_location_json"]
@@ -92,15 +100,15 @@ class Pipeline:
         print("DONE \n")
     
     def build_processed(self):
-        merge_to_processed.process(self.paths["raw_csv_path"],self.paths["processed_csv_path"])
-        merge_to_processed.process_weather(self.paths["api_data_path"],self.paths["processed_csv_path"])
+        merge_to_processed.process(self.paths["raw_csv_path"],self.paths["processed_path"])
+        merge_to_processed.process_weather(self.paths["api_data_path"],self.paths["processed_path"])
         print("DONE \n")
 
     def build_db(self):
         
         print("Creating the database")
         create_db.create_database(self.paths["database_path"],
-                                  self.paths['path_to_train'],self.paths['path_to_weather'],
+                                  self.paths['path_to_train_csv'],self.paths['path_to_weather_csv'],
                                   self.paths["raw_csv_path"],self.paths["train_geo_location"])
         
     def run(self, train_data, duration="1y"):
@@ -108,6 +116,8 @@ class Pipeline:
         self.fetch(train_data, duration)
         print("------ PARSE ------")
         self.parse(train_data)
+        print("------ COORDINATES ------")
+        self.build_station_coords()
         print("------ WEATHER ------")
         self.build_weather()
         print("------ PROCESSED ------")

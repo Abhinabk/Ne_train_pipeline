@@ -10,20 +10,21 @@ def main():
         "train_config_path": path / "config/trains.json",
         "train_geo_location_json": path / "train_geo_location"/"india_railway_stations.geojson",
         "api_data_path":  path/"data"/"raw"/"weather",
-        "processed_csv_path": path/"data"/"processed",
+        "processed_path": path/"data"/"processed",
         "database_path": path/"data"/"database",
-        "path_to_train": path/"data"/"processed"/"time_series.csv",
-        "path_to_weather": path/"data"/"processed"/"weather.csv"
+        "path_to_train_csv": path/"data"/"processed"/"time_series.csv",
+        "path_to_weather_csv": path/"data"/"processed"/"weather.csv",
+        "path_to_station_coord_csv": path/"data"/"processed"/"station_coordinates.csv"
     }
 
     # create path if not exist for saving 
     paths["raw_html_path"].mkdir(parents=True, exist_ok=True)
     paths["raw_csv_path"].mkdir(parents=True, exist_ok=True)
     paths["api_data_path"].mkdir(parents=True, exist_ok=True)
-    paths["processed_csv_path"].mkdir(parents=True, exist_ok=True)
+    paths["processed_path"].mkdir(parents=True, exist_ok=True)
     paths["database_path"].mkdir(parents=True, exist_ok=True)
-    paths["path_to_train"].mkdir(parents=True, exist_ok=True)
-    paths["path_to_weather"].mkdir(parents=True, exist_ok=True)
+    paths["path_to_train_csv"].parent.mkdir(parents=True, exist_ok=True)
+    paths["path_to_weather_csv"].parent.mkdir(parents=True, exist_ok=True)
     
   
     train_data = train_info.get_train_info(paths["train_config_path"])
