@@ -13,3 +13,18 @@
 
 # DATA
 1. The data in time_series.csv signifies delay in minutes 
+
+# IMP
+Now with station-level weather you have:
+  stations×days
+instead of:
+  trains×days
+So row growth becomes much larger.
+Example:
+9 trains * 365days ~ 3krows
+216 stations×365 days ~ 78k rows
+That’s why:
+row count exploded
+API load increased
+rate limiting appeared
+even though request count may still seem small
