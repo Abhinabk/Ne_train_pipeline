@@ -1,9 +1,10 @@
 from pathlib import Path
-from script import scraper, parser, merge_to_processed,create_db,get_location,add_station_name
-from api import get_weather_data as gwd
+from script import scraper, parser, merge_to_processed,create_db,get_location,add_station_name,get_weather_info
+from api import weather_backfill,weather_incremental
 import time
 import random
 from datetime import datetime,date
+import duckdb
 
 class Pipeline:
     def __init__(self, paths: dict[str, Path]):
@@ -82,8 +83,8 @@ class Pipeline:
     def build_station_coords(self):
         path_to_station_coord_csv = self.paths["path_to_station_coord_csv"]
 
-        get_location.get_longitude_latitude(self.paths["path_to_raw_csv"],
-                                            self.paths["path_to_geo_loc_json"],
+        get_location.get_longitude_latitude(self.paths["raw_csv_path"],
+                                            self.paths["train_geo_location_json"],
                                             self.paths["processed_path"])
         if path_to_station_coord_csv.is_file():
             add_station_name.add_to_station_coords(path_to_station_coord_csv,
@@ -91,13 +92,21 @@ class Pipeline:
     def build_weather(self):
         raw_csv_path = self.paths["raw_csv_path"]
         station_coordinates_path= self.paths["path_to_station_coord_csv"]
-        output_path = self.paths["path_to_weather_csv"]
-        gwd.build_weather_dataset(
-                raw_csv_path, 
-                station_coordinates_path, 
-                output_path
-        )
-        print("DONE \n")
+        output_path = self.paths["raw_csv_weather_path"]
+        path_to_db = self.paths['database_path']
+        with duckdb.connect(str(path_to_db / "ne_pipeline.db")) as con:
+            
+            if get_weather_info.table_has_data(con,"weather"):
+                print("[WEATHER] Running incremental update")
+                weather_incremental.update_weather(con)       
+            else:
+                print("[WEATHER] Running backfill")
+                weather_backfill.build_weather_dataset(
+                    raw_csv_path,
+                    station_coordinates_path,
+                    output_path,
+                )
+        print("DONE\n")
     
     def build_processed(self):
         merge_to_processed.process(self.paths["raw_csv_path"],self.paths["processed_path"])
@@ -105,11 +114,13 @@ class Pipeline:
         print("DONE \n")
 
     def build_db(self):
-        
-        print("Creating the database")
-        create_db.create_database(self.paths["database_path"],
-                                  self.paths['path_to_train_csv'],self.paths['path_to_weather_csv'],
-                                  self.paths["raw_csv_path"],self.paths["train_geo_location"])
+        path_to_db = self.paths['database_path']
+        with duckdb.connect(str(path_to_db / "ne_pipeline.db")) as con:
+            print("Creating the database")
+            create_db.create_database(self.paths["database_path"],
+                    self.paths['path_to_train_csv'],self.paths['path_to_weather_csv'],
+                    self.paths["raw_csv_path"],self.paths["path_to_station_coords_csv"],
+                    con)
         
     def run(self, train_data, duration="1y"):
         print("------ FETCH ------")

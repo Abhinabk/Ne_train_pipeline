@@ -104,11 +104,6 @@ def build_weather_dataset(
     count = 0
 
     station_df = pd.read_csv(station_coordinates_path)
-    #nearby station mostly will be same data trying to reduce api calls
-    station_df["latitude"] = station_df["latitude"].round(2)
-    station_df["longitude"] = station_df["longitude"].round(2)
-    
-    station_df = station_df.drop_duplicates(subset=['longitude','latitude'])
     min_max_date = get_min_max_date.get_global_date_range(raw_csv_path)
     total_stations = len(station_df['station_code'])
 
@@ -143,7 +138,8 @@ def build_weather_dataset(
             rows = flatten_weather_data(data)
             if rows:
                 df = pd.DataFrame(rows)
-                df.to_csv(path_to_weather_file,mode="a",header=not path_to_weather_file.exists(),index=False)
+                # no repeated column names not path_to_weather_file.exists() so header is false is file already exist
+                df.to_csv(path_to_weather_file,mode="a",header= not path_to_weather_file.exists(),index=False)
             
             count+=1
             print(f"[LOG] Fetched weather for {station_code} Completed: {count}/{total_stations}")

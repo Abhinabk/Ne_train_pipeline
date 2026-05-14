@@ -7,6 +7,7 @@ def main():
     paths = {
         "raw_html_path": path / "data"/"raw"/"raw_html",
         "raw_csv_path": path / "data"/"raw"/"raw_csv",
+        "raw_csv_weather_path": path / "data"/"raw"/"weather",
         "train_config_path": path / "config/trains.json",
         "train_geo_location_json": path / "train_geo_location"/"india_railway_stations.geojson",
         "api_data_path":  path/"data"/"raw"/"weather",
@@ -20,6 +21,7 @@ def main():
     # create path if not exist for saving 
     paths["raw_html_path"].mkdir(parents=True, exist_ok=True)
     paths["raw_csv_path"].mkdir(parents=True, exist_ok=True)
+    paths["raw_csv_weather_path"].mkdir(parents=True, exist_ok=True)
     paths["api_data_path"].mkdir(parents=True, exist_ok=True)
     paths["processed_path"].mkdir(parents=True, exist_ok=True)
     paths["database_path"].mkdir(parents=True, exist_ok=True)

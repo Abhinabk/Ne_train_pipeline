@@ -1,8 +1,10 @@
 # TODO
 1. ~~Add type hints to all files~~
 2. ~~Add train_no as a primary column to all CSVs~~
-3. Clean up main.py
-4. ADD 2 tables station code->station names ,Train code->Train names
+3. ~~Clean up main.py~~
+4.  I am check if diff betenn dates say 365 so 365 rows exits for a station code 
+    and if less then trigger an api call but have if we do after 5 days now only 5 extra
+    days but it will trigger an api call for enire 365 days for each staion wich is lost of wasted api calls sice we only nedd 5 days worth of new data so better approch will be to check for last date recorded in weather table for ech distinct station and only get the diff of data from last recorded date and date when api needs to be called  (son incremental lload insted of full refresh)
 ## MAJOR:
 1. ~~Integrate weather API (evaluate: OpenWeather, Meteostat)~~
 2. ~~Map timestamps → weather data~~
