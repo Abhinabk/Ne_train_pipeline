@@ -44,5 +44,5 @@ if __name__ == "__main__":
     path_to_raw_weather = Path("data/raw/weather")
     path_to_processed = Path("data/processed")
     
-    process(path_to_raw, path_to_processed)
+    # process(path_to_raw, path_to_processed)
     process_weather(path_to_raw_weather,path_to_processed)

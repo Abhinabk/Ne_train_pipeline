@@ -75,7 +75,7 @@ def flatten_weather_data(weather_data: dict) -> list[dict]:
     for i in range(len(daily["time"])):
         rows.append(
             {   
-                "station-code": station_code,
+                "station_code": station_code,
                 "date": daily["time"][i],
                 "temperature_2m_max": daily["temperature_2m_max"][i],
                 "temperature_2m_min": daily["temperature_2m_min"][i],
@@ -119,9 +119,9 @@ def build_weather_dataset(
     start_date,end_date = min_max_date
     #resume from last Station
     if path_to_weather_file.is_file():
-        existing_df = pd.read_csv(path_to_weather_file,usecols=["station-code"])
+        existing_df = pd.read_csv(path_to_weather_file,usecols=["station_code"])
         expected_days = (pd.to_datetime(end_date)- pd.to_datetime(start_date)).days + 1
-        station_counts = (existing_df.groupby("station-code").size())
+        station_counts = (existing_df.groupby("station_code").size())
 
         completed_stations = set(station_counts[station_counts >= expected_days].index)        
         count = len(completed_stations)
