@@ -62,7 +62,7 @@ def fetch_weather_daily(
             print(f"[RETRY]attempt {attempt+1}/{max_retries} in {wait:.1f}s")
             time.sleep(wait)
 
-    raise RuntimeError(f"Failed fetching {station_code}")
+    raise AssertionError("Unreachable")
 
 def flatten_weather_data(weather_data: dict) -> list[dict]:
     #run agianst single station at a time
@@ -103,7 +103,6 @@ def build_weather_dataset(
     completed_stations = set()
     count = 0
 
-   
     station_df = pd.read_csv(station_coordinates_path)
     #nearby station mostly will be same data trying to reduce api calls
     station_df["latitude"] = station_df["latitude"].round(2)
@@ -154,7 +153,7 @@ def build_weather_dataset(
         except requests.exceptions.HTTPError as e:
             if(e.response is not None and e.response.status_code == 429):
                 print(f"[RATE LIMIT] {e}")
-                print("[STOP] Resume later [{station_code}]")
+                print(f"[STOP] Resume later [{station_code}]")
                 break
             need_to_fetch_again.add(station_code)
 

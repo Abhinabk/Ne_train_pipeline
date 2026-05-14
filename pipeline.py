@@ -90,11 +90,11 @@ class Pipeline:
                                                self.paths["raw_html_path"])
     def build_weather(self):
         raw_csv_path = self.paths["raw_csv_path"]
-        train_geo_location = self.paths["train_geo_location_json"]
-        output_path = self.paths["api_data_path"]
+        station_coordinates_path= self.paths["path_to_station_coord_csv"]
+        output_path = self.paths["path_to_weather_csv"]
         gwd.build_weather_dataset(
                 raw_csv_path, 
-                train_geo_location, 
+                station_coordinates_path, 
                 output_path
         )
         print("DONE \n")

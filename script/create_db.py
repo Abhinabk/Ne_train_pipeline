@@ -55,8 +55,8 @@ def create_database(
 
         #WEATHER
         con.execute("""
-            CREATE TABLE IF NOT EXISTS weather (
-            train_no VARCHAR,
+        CREATE TABLE IF NOT EXISTS weather (
+            station_code VARCHAR,
             date DATE,
             temperature_2m_max DOUBLE,
             temperature_2m_min DOUBLE,
@@ -67,7 +67,7 @@ def create_database(
             wind_gusts_10m_max DOUBLE,
             relative_humidity_2m_mean DOUBLE,
             weather_code INTEGER,
-        PRIMARY KEY (train_no, date)
+        PRIMARY KEY (station_code, date)
             )
         """)
 
