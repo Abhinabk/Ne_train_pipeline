@@ -9,5 +9,7 @@ tempCodeRunnerFile.py
 .python-version
 # Virtual environments
 .venv
-# Data Folder 
-data/
+# Data
+raw/
+*.db
+*.html
