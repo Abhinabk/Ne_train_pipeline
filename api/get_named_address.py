@@ -12,7 +12,7 @@ def get_address(path_to_station_coords,output_path:Path):
     output_csv_path = output_path/"address.csv"
     output_csv_path.parent.mkdir(parents=True, exist_ok=True)
     stations_not_found = set()
-    
+
     if output_csv_path.exists():
         completed_df = pd.read_csv(output_csv_path, usecols=["station_code"])
         completed = set(completed_df["station_code"])
@@ -29,7 +29,7 @@ def get_address(path_to_station_coords,output_path:Path):
             print(f"[LOG] completed {count}/{total}")
             continue
         try:
-            location = geolocator.reverse(f"{latitude}, {longitude}",timeout=10)
+            location = geolocator.reverse(f"{latitude}, {longitude}",timeout=10) # type: ignore
             if location:
                 address = location.raw.get("address", {}) # type: ignore
                 address_row = pd.DataFrame([{ 
