@@ -1,6 +1,6 @@
 from pathlib import Path
 from script import scraper, parser, merge_to_processed,create_db,get_location,add_station_name,get_weather_info
-from api import weather_backfill,weather_incremental
+from api import weather_backfill,weather_incremental,get_named_address
 import time
 import random
 from datetime import datetime,date
@@ -86,16 +86,19 @@ class Pipeline:
         get_location.get_longitude_latitude(self.paths["raw_csv_path"],
                                             self.paths["train_geo_location_json"],
                                             self.paths["processed_path"])
-        if path_to_station_coord_csv.is_file():
-            add_station_name.add_to_station_coords(path_to_station_coord_csv,
-                                               self.paths["raw_html_path"])
+        if not path_to_station_coord_csv.exists():
+            print(f"[WARN] no such file {path_to_station_coord_csv}")
+            return
+        
+        add_station_name.add_to_station_coords(path_to_station_coord_csv,
+                                            self.paths["raw_html_path"])
     def build_weather(self):
         raw_csv_path = self.paths["raw_csv_path"]
         station_coordinates_path= self.paths["path_to_station_coord_csv"]
         output_path = self.paths["raw_csv_weather_path"]
         path_to_db = self.paths['database_path']
         with duckdb.connect(str(path_to_db / "ne_pipeline.db")) as con:
-            
+
             if get_weather_info.table_has_data(con,"weather"):
                 print("[WEATHER] Running incremental update")
                 weather_incremental.update_weather(con)       
@@ -113,14 +116,31 @@ class Pipeline:
         merge_to_processed.process_weather(self.paths["api_data_path"],self.paths["processed_path"])
         print("DONE \n")
 
+    def build_station_address(self):
+        path_to_address_csv = self.paths["path_to_address_csv"]
+
+        if path_to_address_csv.exists():
+            fetched_date = datetime.fromtimestamp(path_to_address_csv.stat().st_mtime).date()
+            if fetched_date == date.today():
+                print("[SKIP] address.csv already exists")
+                return
+        get_named_address.get_address(
+            self.paths["path_to_station_coord_csv"],
+            self.paths["processed_path"]
+        )
+        print(f"[LOG] saved to {path_to_address_csv}\n")
+
     def build_db(self):
         path_to_db = self.paths['database_path']
         with duckdb.connect(str(path_to_db / "ne_pipeline.db")) as con:
             print("Creating the database")
             create_db.create_database(self.paths["database_path"],
                     self.paths['path_to_train_csv'],self.paths['path_to_weather_csv'],
-                    self.paths["raw_csv_path"],self.paths["path_to_station_coords_csv"],
-                    con)
+                    self.paths["raw_csv_path"],
+                    self.paths["path_to_address_csv"],
+                    self.paths["path_to_station_coords_csv"],
+                    con
+                    )
         
     def run(self, train_data, duration="1y"):
         print("------ FETCH ------")

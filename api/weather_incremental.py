@@ -41,6 +41,7 @@ def update_weather(con):
         missing_days = int(row.missing_days) # type: ignore
         latitude = float(row.latitude) # type: ignore
         longitude = float(row.longitude) # type: ignore
+        updated_count = 0
         if missing_days <= 0:
             continue
         #adds 1 day to last date
@@ -56,17 +57,18 @@ def update_weather(con):
         else:
             start_date = str((row.last_date + pd.Timedelta(days=1)).date()) # type: ignore
         end_date = str(row.target_date.date()) # type: ignore
-        print(f"[LOG] Running Incremental" 
+        print(f"[LOG] Running Incremental " 
               f"{station_code} {start_date} -> {end_date}")
         try:
             data = fetch_weather_daily(station_code,latitude,longitude,start_date,end_date)
             rows = flatten_weather_data(data)
+            updated_count += 1
             if rows:
                 con.executemany("""
                     INSERT OR IGNORE INTO weather
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """, rows)
-                print(f"[SUCCESS] {station_code}")
+            print(f"[SUCCESS] {station_code}")
 
         except requests.exceptions.HTTPError as e:
             if(e.response is not None and e.response.status_code == 429):
@@ -78,6 +80,8 @@ def update_weather(con):
             print(f"[REQUEST ERROR] {station_code}: {e}")
             need_to_fetch_again.add(station_code)
 
+    if updated_count == 0:
+        print("[INFO] Weather already up to date")
     if need_to_fetch_again:
         print("\n[FAILED STATIONS]")
         print(need_to_fetch_again)

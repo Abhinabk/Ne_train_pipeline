@@ -14,7 +14,7 @@ def get_route(raw_csv_path:Path)->list[tuple]:
 
 
 def create_database(
-    path_to_db: Path, path_to_train: Path, path_to_weather: Path,raw_csv_path:Path,
+    path_to_db: Path, path_to_train: Path, path_to_weather: Path,raw_csv_path:Path,path_to_address_csv,
     path_to_station_coords:Path,con:duckdb.DuckDBPyConnection
 ) -> None:
     
@@ -43,6 +43,27 @@ def create_database(
             latitude
         FROM read_csv('{str(path_to_station_coords)}') 
         
+    """)
+
+    #address
+    con.execute("""
+    CREATE TABLE IF NOT EXISTS station_address (
+        station_code VARCHAR ,
+        state VARCHAR,
+        district VARCHAR,
+        country VARCHAR,
+        PRIMARY KEY (station_code)
+        )
+    """)
+
+    con.execute(f"""
+    INSERT OR IGNORE INTO station_address
+    SELECT
+        station_code,
+        state,
+        district,
+        country
+    FROM read_csv('{str(path_to_address_csv)}')
     """)
     #routes 
     con.execute("""
@@ -122,6 +143,9 @@ def create_database(
     SELECT * from weather USING SAMPLE 10 ROWS
     """).show()
     con.sql("""
+    SELECT * from station_address USING SAMPLE 10 ROWS
+    """).show()
+    con.sql("""
     SELECT * from stations_coordinates USING SAMPLE 10 ROWS
     """).show()
 
@@ -136,8 +160,12 @@ def create_database(
     SELECT COUNT(*) total_rows_station_coord from stations_coordinates
     """).show()
     con.sql("""
+    SELECT COUNT(*) station_address_count from station_address
+    """).show()
+    con.sql("""
     SELECT COUNT(*) total_rows_routes from train_route
     """).show()
+    
 
 
 if __name__ == "__main__":
@@ -145,8 +173,11 @@ if __name__ == "__main__":
     path_to_ts = Path("data/processed/time_series.csv")
     path_to_weather = Path("data/processed/weather.csv")
     raw_csv_path = Path("data/raw/raw_csv")
+    path_to_address_csv = Path("data/processed/address.csv")
     path_to_station_coords =  Path("data/processed/station_coordinates.csv")
     path_to_db.mkdir(parents=True, exist_ok=True)
     with duckdb.connect(str(path_to_db / "ne_pipeline.db")) as con:
         create_database(path_to_db, path_to_ts, 
-                        path_to_weather,raw_csv_path,path_to_station_coords,con)
+                        path_to_weather,raw_csv_path,
+                        path_to_address_csv,
+                        path_to_station_coords,con)
