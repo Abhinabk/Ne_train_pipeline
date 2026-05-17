@@ -1,7 +1,8 @@
-
+from pathlib import Path
 import streamlit as st
 import duckdb 
 
+db_path = Path(__file__).parent.parent / "data" / "database" / "ne_pipeline.db"
 
 @st.cache_resource
 def get_connection():
