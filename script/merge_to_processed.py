@@ -8,7 +8,6 @@ import pandas as pd
 
 def process(path_to_raw: Path, path_to_processed: Path) -> None:
     time_series_files = []
-    ts_row_count = 0
 
     for i in path_to_raw.rglob("time_series.csv"):
        
@@ -21,7 +20,6 @@ def process(path_to_raw: Path, path_to_processed: Path) -> None:
             value_name="Delay"
 
         )
-        ts_row_count+=len(df)
         time_series_files.append(df)
    
     if time_series_files:

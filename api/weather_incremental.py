@@ -36,12 +36,12 @@ def stations_needing_update(con)->pd.DataFrame:
 def update_weather(con):
     df = stations_needing_update(con)
     need_to_fetch_again = set()
+    updated_count = 0
     for row in df.itertuples():
         station_code = str(row.station_code)
         missing_days = int(row.missing_days) # type: ignore
         latitude = float(row.latitude) # type: ignore
         longitude = float(row.longitude) # type: ignore
-        updated_count = 0
         if missing_days <= 0:
             continue
         #adds 1 day to last date

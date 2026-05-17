@@ -92,3 +92,23 @@ def get_temporal_delay_data():
 	GROUP BY month, weekday
 	""").fetchdf()
 	return temporal_data
+
+@st.cache_data
+def get_weather_data():
+	con = get_connection()
+	weather_data = con.execute('''
+	SELECT
+		delay_minutes,
+		station_code,
+		train_no,
+		temperature_2m_mean,
+		precipitation_sum,
+		rain_sum,
+		wind_speed_10m_max,
+		relative_humidity_2m_mean,
+	FROM merged_view
+	''').fetchdf()
+
+	return weather_data
+
+

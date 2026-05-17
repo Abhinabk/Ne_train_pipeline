@@ -19,12 +19,8 @@ def load_geo_data(path):
             return json.load(f)
     except FileNotFoundError:
         print(f"Geo data file not found: {path}") 
-def get_overlap_percentage(s1, s2):
-    return SequenceMatcher(None, s1, s2).ratio()
-      
 
-
-
+    
 def get_coords(station_code: str,geo_data: dict) -> dict | None:
     """return longitudeitude and latitudeitude"""
  

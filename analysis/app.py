@@ -1,6 +1,7 @@
 import streamlit as st
 import plotly.express as px
 import pydeck as pdk
+import pandas as pd
 
 from analysis.data import (
     get_overview_data,
@@ -8,7 +9,8 @@ from analysis.data import (
     get_delay_data,
     get_station_delay_data,
     get_season_delay_data,
-    get_temporal_delay_data
+    get_temporal_delay_data,
+    get_weather_data
     )
 def overview():
     '''
@@ -19,11 +21,12 @@ def overview():
     date range'''
 
     data = get_overview_data()
-    total_records, total_trains, total_stations, avg_delay, min_date, max_date = data
+    if data:
+        total_records, total_trains, total_stations, avg_delay, min_date, max_date = data
     delay_df = get_delay_data()
     st.header("OVERVIEW")
 
-    st.write(f"Data from {min_date} to {max_date}")
+    st.info(f"Data from {min_date} to {max_date}")
     
     c1,c2,c3,c4 = st.columns(4)
 
@@ -246,7 +249,133 @@ def season_analysis():
     st.info(f""" Winter records the highest average delays {winter_delay}min during Jan and Dec, more than double monsoon delays {monsoon_delay}min. 
         This suggests low-visibility winter conditions such as fog may disrupt railway operations more significantly than rainfall.
         """)
-   
+def weather():
+    st.header("Weather delay patterns")
+    weather_df = get_weather_data()
+    weather_df = weather_df[weather_df['delay_minutes'] < 1000]
+    c1, c2 = st.columns(2)
+    c3,c4 = st.columns(2)
+    c5,c6 = st.columns(2)
+
+    with c1:
+        fig = px.scatter(
+                weather_df,
+                x="temperature_2m_mean",
+                y="delay_minutes",
+                opacity=0.3,
+                trendline="ols",
+                title="Temperature vs Train Delay",
+
+                hover_data=[
+                    "station_code",
+                    "train_no"
+                ]
+            )
+        fig.update_traces(
+            selector=dict(mode="lines"),
+            line=dict(color="#B0E0E6", width=3)
+        )
+        st.plotly_chart(fig, width='stretch')
+    with c2:
+        fig = px.scatter(
+            weather_df,
+            x="rain_sum",
+            y="delay_minutes",
+            opacity=0.3,
+            trendline="ols",
+            title="Rainfall vs Train Delay"
+            )
+        fig.update_traces(
+            selector=dict(mode="lines"),
+            line=dict(color="#B0E0E6", width=3)
+        )
+        st.plotly_chart(fig, width='stretch')
+    with c3:
+        fig = px.scatter(
+            weather_df,
+            x="relative_humidity_2m_mean",
+            y="delay_minutes",
+            opacity=0.3,
+            trendline="ols",
+            title="Humidity vs Train Delay"
+            )
+        fig.update_traces(
+            selector=dict(mode="lines"),
+            line=dict(color="#B0E0E6", width=3)
+        )
+        st.plotly_chart(fig, width='stretch')
+    with c4:
+        fig = px.scatter(
+            weather_df,
+            x="wind_speed_10m_max",
+            y="delay_minutes",
+            opacity=0.3,
+            trendline="ols",
+            title="Wind vs Train Delay"
+            )
+        fig.update_traces(
+            selector=dict(mode="lines"),
+            line=dict(color="#B0E0E6", width=3)
+        )
+        st.plotly_chart(fig, width='stretch')
+
+    with c5:
+        weather_df['temp_category'] = pd.cut(
+        weather_df['temperature_2m_mean'],
+            bins=[0, 10, 20, 30, 50],
+            labels=[
+                'Cold',
+                'Cool',
+                'Warm',
+                'Hot'
+            ]
+        )
+        fig = px.violin(
+            weather_df,
+            x="temp_category",
+            y="delay_minutes"
+        )
+        st.plotly_chart(fig, width='stretch')
+
+    corr_df = weather_df[
+            [
+                'delay_minutes',
+                'temperature_2m_mean',
+                'rain_sum',
+                'wind_speed_10m_max',
+                'relative_humidity_2m_mean'
+            ]
+    ]
+    corr = corr_df.corr()
+    with c6:
+        fig = px.imshow(
+                corr,
+                text_auto=".2f", # type: ignore
+                color_continuous_scale="Blues",
+                aspect="auto",
+                title="Weather Variable Correlation Heatmap"
+        )
+
+        fig.update_layout(
+            coloraxis_showscale=False,
+            paper_bgcolor="#0e1117",
+            plot_bgcolor="#0e1117",
+            font_color="white"
+        )
+
+        st.plotly_chart(fig, width='stretch')
+
+    st.info(
+    """
+    Temperature shows the strongest relationship with train delays (-0.22 correlation), 
+    while rainfall ,humidity, wind speed  has comparatively weaker effects. 
+    Although delays occur across all rainfall levels, severe delays are not consistently concentrated during high-rain conditions, 
+    suggesting rainfall alone is not a dominant predictor of disruption.
+    No-rain conditions (~73 min average delay) exhibit delay levels comparable to extreme rainfall events (~75 min),
+    suggesting low-visibility winter conditions such as fog may impact railway operations more significantly than rainfall.
+    """
+    )
+
 def main():
     st.set_page_config(layout="wide")
     st.title("Northeast India Train Delay Analytics")
@@ -264,7 +393,7 @@ def main():
     station_analysis()
     st.divider()
     season_analysis()
-
-
+    st.divider()
+    weather()
 if __name__ == "__main__":
     main()
