@@ -3,7 +3,7 @@ import plotly.express as px
 import pydeck as pdk
 import pandas as pd
 
-from analysis.data import (
+from .data  import (
     get_overview_data,
     get_train_delay_data,
     get_delay_data,
