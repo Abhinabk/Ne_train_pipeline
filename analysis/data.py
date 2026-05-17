@@ -2,11 +2,16 @@ from pathlib import Path
 import streamlit as st
 import duckdb 
 
-db_path = Path(__file__).parent.parent / "data" / "database" / "ne_pipeline.db"
-
+merged_view_parquet =Path(__file__).parent / 'merged_view.parquet'
 @st.cache_resource
 def get_connection():
-	return duckdb.connect(str(db_path))
+	con = duckdb.connect()
+	con.execute(f"""
+			CREATE VIEW merged_view AS
+			SELECT *
+			FROM read_parquet('{merged_view_parquet}')
+	""")
+	return con
 
 @st.cache_data
 def get_overview_data():

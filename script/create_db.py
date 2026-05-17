@@ -175,7 +175,10 @@ def create_database(
 
     """)
 
-
+    con.execute("""
+    COPY (SELECT * FROM merged_view) 
+    TO 'analysis/merged_view.parquet' 
+    """)
     con.sql("""
     SELECT * from train_delay USING SAMPLE 10 ROWS
     """).show()

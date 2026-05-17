@@ -192,7 +192,7 @@ def station_analysis():
             nbins=30,
             title="Distribution of Average Station Delays"
             )
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, width='stretch')
     st.info(
     """Most stations fall within the 40–80 minute average delay range, 
     while a small number of stations exceed 140+ minutes, indicating concentrated delay hotspots.  
