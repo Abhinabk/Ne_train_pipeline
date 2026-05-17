@@ -263,7 +263,6 @@ def weather():
                 x="temperature_2m_mean",
                 y="delay_minutes",
                 opacity=0.3,
-                trendline="ols",
                 title="Temperature vs Train Delay",
 
                 hover_data=[
@@ -282,7 +281,6 @@ def weather():
             x="rain_sum",
             y="delay_minutes",
             opacity=0.3,
-            trendline="ols",
             title="Rainfall vs Train Delay"
             )
         fig.update_traces(
@@ -296,7 +294,6 @@ def weather():
             x="relative_humidity_2m_mean",
             y="delay_minutes",
             opacity=0.3,
-            trendline="ols",
             title="Humidity vs Train Delay"
             )
         fig.update_traces(
@@ -310,7 +307,6 @@ def weather():
             x="wind_speed_10m_max",
             y="delay_minutes",
             opacity=0.3,
-            trendline="ols",
             title="Wind vs Train Delay"
             )
         fig.update_traces(
@@ -333,7 +329,8 @@ def weather():
         fig = px.violin(
             weather_df,
             x="temp_category",
-            y="delay_minutes"
+            y="delay_minutes",
+            title="Violin Plot of temp categories"
         )
         st.plotly_chart(fig, width='stretch')
 

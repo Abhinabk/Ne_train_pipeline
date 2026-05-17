@@ -1,30 +1,35 @@
 import duckdb
 from pathlib import Path
-import pandas as pd 
+import pandas as pd
 
-def get_route(raw_csv_path:Path)->list[tuple]:
+
+def get_route(raw_csv_path: Path) -> list[tuple]:
     routes = []
     for csv_file in raw_csv_path.rglob("time_series.csv"):
-        df = pd.read_csv(csv_file,nrows=1)
-        train_no = str(df.iloc[0]['Train'])
-        stations = df.drop(['Train','Date'],axis=1).columns.to_list()
-        for order,station_code in enumerate(stations,start=1):
-            routes.append((train_no,order,station_code))
+        df = pd.read_csv(csv_file, nrows=1)
+        train_no = str(df.iloc[0]["Train"])
+        stations = df.drop(["Train", "Date"], axis=1).columns.to_list()
+        for order, station_code in enumerate(stations, start=1):
+            routes.append((train_no, order, station_code))
     return routes
 
 
 def create_database(
-    path_to_db: Path, path_to_train: Path, path_to_weather: Path,raw_csv_path:Path,path_to_address_csv,
-    path_to_station_coords:Path,con:duckdb.DuckDBPyConnection
+    path_to_db: Path,
+    path_to_train: Path,
+    path_to_weather: Path,
+    raw_csv_path: Path,
+    path_to_address_csv,
+    path_to_station_coords: Path,
+    con: duckdb.DuckDBPyConnection,
 ) -> None:
-    
-    '''old schema expected train_no new data became station_code as column types were same
-    so schema drift have to be careful.'''
+    """old schema expected train_no new data became station_code as column types were same
+    so schema drift have to be careful."""
     route_data = get_route(raw_csv_path)
     print(f"IN DB {path_to_db}")
 
-    #coordinate
-    
+    # coordinate
+
     con.execute("""
         CREATE TABLE IF NOT EXISTS stations_coordinates(
             station_code VARCHAR,
@@ -45,7 +50,7 @@ def create_database(
         
     """)
 
-    #address
+    # address
     con.execute("""
     CREATE TABLE IF NOT EXISTS station_address (
         station_code VARCHAR ,
@@ -65,7 +70,7 @@ def create_database(
         country
     FROM read_csv('{str(path_to_address_csv)}')
     """)
-    #routes 
+    # routes
     con.execute("""
     CREATE TABLE IF NOT EXISTS train_route (
         train_no VARCHAR,
@@ -73,20 +78,22 @@ def create_database(
         station_code VARCHAR,
         PRIMARY KEY (train_no, station_order)
         )
-    """
-    )
-    con.executemany("""
+    """)
+    con.executemany(
+        """
     INSERT OR IGNORE INTO train_route
         VALUES (?, ?, ?)
-    """, route_data)
-    #TRAIN
+    """,
+        route_data,
+    )
+    # TRAIN
     con.execute("""
         CREATE TABLE IF NOT EXISTS train_delay (
             train_no VARCHAR,
             date DATE,
-            station VARCHAR,
+            station_code VARCHAR,
             delay_minutes INTEGER,
-            PRIMARY KEY (train_no, date, station)
+            PRIMARY KEY (train_no, date, station_code)
         )
     """)
 
@@ -95,13 +102,13 @@ def create_database(
         SELECT
             Train AS train_no,
             Date AS date,
-            Station AS station,
+            Station AS station_code,
             Delay AS delay_minutes
         FROM read_csv('{str(path_to_train)}')
 
     """)
 
-    #WEATHER
+    # WEATHER
     con.execute("""
     CREATE TABLE IF NOT EXISTS weather (
         station_code VARCHAR,
@@ -135,13 +142,13 @@ def create_database(
         weather_code
         FROM read_csv('{str(path_to_weather)}')
     """)
-    #DENORMALISED VIEW
+    # DENORMALISED VIEW
     con.execute("""
     CREATE OR REPLACE VIEW merged_view AS
     SELECT
         td.train_no,
         td.date,
-        td.station as station_code,
+        td.station_code ,
         td.delay_minutes,
 
         sc.latitude,
@@ -164,14 +171,14 @@ def create_database(
     FROM train_delay td
 
     LEFT JOIN weather w
-        ON td.station = w.station_code
+        ON td.station_code = w.station_code
         AND td.date = w.date
 
     LEFT JOIN stations_coordinates sc
-        ON td.station = sc.station_code
+        ON td.station_code = sc.station_code
 
     LEFT JOIN station_address sa
-        ON td.station = sa.station_code
+        ON td.station_code = sa.station_code
 
     """)
 
@@ -192,7 +199,6 @@ def create_database(
     SELECT * from stations_coordinates USING SAMPLE 10 ROWS
     """).show()
 
-
     con.sql("""
     SELECT COUNT() as total_rows_train from train_delay
     """).show()
@@ -208,7 +214,6 @@ def create_database(
     con.sql("""
     SELECT COUNT(*) total_rows_routes from train_route
     """).show()
-    
 
 
 if __name__ == "__main__":
@@ -217,10 +222,15 @@ if __name__ == "__main__":
     path_to_weather = Path("data/processed/weather.csv")
     raw_csv_path = Path("data/raw/raw_csv")
     path_to_address_csv = Path("data/processed/address.csv")
-    path_to_station_coords =  Path("data/processed/station_coordinates.csv")
+    path_to_station_coords = Path("data/processed/station_coordinates.csv")
     path_to_db.mkdir(parents=True, exist_ok=True)
     with duckdb.connect(str(path_to_db / "ne_pipeline.db")) as con:
-        create_database(path_to_db, path_to_ts, 
-                        path_to_weather,raw_csv_path,
-                        path_to_address_csv,
-                        path_to_station_coords,con)
+        create_database(
+            path_to_db,
+            path_to_ts,
+            path_to_weather,
+            raw_csv_path,
+            path_to_address_csv,
+            path_to_station_coords,
+            con,
+        )
