@@ -380,6 +380,7 @@ def pages():
         "Sections",
         [
             "Overview",
+            "Train Analysis"
             "Station Analysis",
             "Temporal Analysis",
             "Weather Analysis"
