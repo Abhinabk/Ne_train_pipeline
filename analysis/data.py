@@ -6,7 +6,7 @@ db_path = Path(__file__).parent.parent / "data" / "database" / "ne_pipeline.db"
 
 @st.cache_resource
 def get_connection():
-	return duckdb.connect('data/database/ne_pipeline.db')
+	return duckdb.connect(str(db_path))
 
 @st.cache_data
 def get_overview_data():
