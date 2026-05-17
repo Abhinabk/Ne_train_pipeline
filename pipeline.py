@@ -138,7 +138,7 @@ class Pipeline:
                     self.paths['path_to_train_csv'],self.paths['path_to_weather_csv'],
                     self.paths["raw_csv_path"],
                     self.paths["path_to_address_csv"],
-                    self.paths["path_to_station_coords_csv"],
+                    self.paths["path_to_station_coord_csv"],
                     con
                     )
         

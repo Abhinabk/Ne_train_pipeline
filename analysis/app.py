@@ -1,55 +1,15 @@
-
 import streamlit as st
-import duckdb 
 import plotly.express as px
+import pydeck as pdk
 
-
-@st.cache_resource
-def get_connection():
-    return duckdb.connect('data/database/ne_pipeline.db')
-
-@st.cache_data
-def get_overview_data():
-    con = get_connection()
-    data = con.execute("""
-    SELECT
-        COUNT(*) AS total_records,
-        COUNT(DISTINCT train_no) AS total_trains,
-        COUNT(DISTINCT station_code) AS total_stations,
-        ROUND(AVG(delay_minutes),1) AS avg_delay,
-        MIN(date) AS min_date,
-        MAX(date) AS max_date
-    FROM merged_view        
-    """).fetchone()
-    return data
-
-@st.cache_data
-def get_delay_data():
-    con = get_connection()
-    delay_df = con.execute("""
-    SELECT 
-        delay_minutes
-    FROM merged_view
-    WHERE delay_minutes IS NOT NULL AND delay_minutes BETWEEN 10 AND 500
-    """).fetchdf()
-    return delay_df
-
-@st.cache_data
-def get_train_delay_data():
-    con = get_connection()
-    train_data = con.execute("""
-        SELECT 
-            train_no,
-            ROUND(AVG(delay_minutes),1) AS avg_delay,
-            ROUND(MEDIAN(delay_minutes), 2) AS median_delay,
-            MAX(delay_minutes) as worst_delay
-        FROM merged_view
-        group by train_no 
-        LIMIT 10
-    """).fetchdf()
-    return train_data
-
-
+from analysis.data import (
+    get_overview_data,
+    get_train_delay_data,
+    get_delay_data,
+    get_station_delay_data,
+    get_season_delay_data,
+    get_temporal_delay_data
+    )
 def overview():
     '''
     total records
@@ -158,7 +118,135 @@ def train_anlysis():
     with st.expander("View Detailed Train Statistics"):
         st.dataframe(train_df,hide_index=True)
 
+def station_analysis():
+    station_df = get_station_delay_data()
+    st.header("Worst Station Delays")
+    c_map,c_grouped = st.columns([0.5,0.5])
 
+    # Define a layer to display on a map
+    layer = pdk.Layer(
+            "ScatterplotLayer",
+            data=station_df,
+            get_position='[longitude, latitude]',
+            get_radius='avg_delay * 100',
+            get_fill_color='''
+                avg_delay > 120 ? [255, 0, 0, 200] :
+                avg_delay > 60 ? [255, 165, 0, 180] :
+                avg_delay > 20 ? [255, 255, 0, 160] :
+                [0, 128, 255, 140]''',
+            pickable=True,
+    )
+    #inital view
+    view_state = pdk.ViewState(
+                latitude=20.5937,
+                longitude=78.9629,
+                zoom=5,
+                )
+    #final deck init
+    deck = pdk.Deck(
+                layers=[layer],
+                initial_view_state=view_state,
+                tooltip={"text": "Station: {station_code}\nAvg Delay: {avg_delay} min"}, # type: ignore
+                )
+    with c_map:
+        st.pydeck_chart(deck)
+    
+    top10_df = (
+                station_df
+                .sort_values("avg_delay", ascending=False)
+                .head(10)
+                )   
+    grouped_df = top10_df.melt(id_vars='station_code',
+                                 value_vars=['avg_delay','median_delay'],
+                                 var_name='metric',
+                                 value_name='delay')
+    with c_grouped:
+        fig = px.bar(grouped_df,
+                    x="delay",
+                    y="station_code",
+                    color="metric",
+                    barmode="group",
+                    orientation="h",
+                    title="Average vs Median Delay by Stations"
+                    )
+        fig.update_layout(
+        xaxis_title="Delay (Minutes)",
+        yaxis_title="Station Code"
+        )
+        st.plotly_chart(fig, width='stretch')
+
+    worst_station = station_df.loc[station_df['avg_delay'].idxmax(),'station_code']
+    max_delay = station_df['avg_delay'].max()
+    
+    st.info(f"""
+        Northern railway corridors show the highest delay severity, 
+        with top stations like {worst_station} averaging nearly {max_delay:.0f} minutes of delay.
+        """
+        )
+    fig = px.histogram(
+            station_df,
+            x="avg_delay",
+            nbins=30,
+            title="Distribution of Average Station Delays"
+            )
+    st.plotly_chart(fig, use_container_width=True)
+    st.info(
+    """Most stations fall within the 40–80 minute average delay range, 
+    while a small number of stations exceed 140+ minutes, indicating concentrated delay hotspots.  
+    """)
+
+def season_analysis():
+    season_df = get_season_delay_data()
+    month_vs_week_df = get_temporal_delay_data()
+    season_df = season_df.sort_values("avg_delay")
+    
+    st.header("Temporal Delays")
+    
+    fig = px.bar(
+            season_df,
+            x="avg_delay",
+            y="season",
+            color="avg_delay",
+            text="avg_delay",
+            title="Average Delay by Season",
+            color_continuous_scale="Blues",
+        )
+
+    fig.update_layout(
+            xaxis_title="Average Delay (Minutes)",
+            yaxis_title="Season",
+            coloraxis_showscale=False
+        )
+    winter_delay = season_df.loc[season_df['season'] == 'Winter','avg_delay'].iloc[0]
+    monsoon_delay = season_df.loc[season_df['season'] == 'Monsoon','avg_delay'].iloc[0]
+    
+    st.plotly_chart(fig, width='stretch')
+
+    pivot_df = month_vs_week_df.pivot(
+        index="month",
+        columns="weekday",
+        values="avg_delay"
+    )
+    months_order = ['January', 'February', 'March', 'April', 'May', 'June', 
+                'July', 'August', 'September', 'October', 'November', 'December']
+    weekday_order = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+
+    pivot_df = pivot_df.reindex(months_order)
+    pivot_df = pivot_df[weekday_order]
+    fig = px.imshow(
+        pivot_df,
+        text_auto=True,
+        aspect="auto",
+        color_continuous_scale="Blues",
+        title="Average Delay Heatmap by Month and Weekday"
+    )
+    st.plotly_chart(fig, width='stretch')
+
+
+    st.info(f""" Winter records the highest average delays {winter_delay}min during Jan and Dec, more than double monsoon delays {monsoon_delay}min. 
+        This suggests low-visibility winter conditions such as fog may disrupt railway operations more significantly than rainfall.
+        """)
+   
 def main():
     st.set_page_config(layout="wide")
     st.title("Northeast India Train Delay Analytics")
@@ -172,8 +260,11 @@ def main():
     overview()
     st.divider()
     train_anlysis()
+    st.divider()
+    station_analysis()
+    st.divider()
+    season_analysis()
 
 
 if __name__ == "__main__":
-    con = get_connection()
     main()
