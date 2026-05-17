@@ -28,7 +28,7 @@ def extract_station_names_from_html(raw_html_path: Path,station_code_list:list) 
     return code_to_name
 
 def add_to_station_coords(path_to_station_coord_csv:Path,raw_html_path)->None:
-    df = pd.read_csv(station_coordinates_path)
+    df = pd.read_csv(path_to_station_coord_csv)
     station_code_list = df["station_code"].to_list()
     code_to_name = extract_station_names_from_html(raw_html_path,station_code_list)
     df["station_name"] = df["station_code"].map(code_to_name)

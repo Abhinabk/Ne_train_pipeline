@@ -64,6 +64,8 @@ def update_weather(con):
             rows = flatten_weather_data(data)
             updated_count += 1
             if rows:
+                #as duckdb expects a tuple/list but flatten_weather_data return list[dict]
+                rows = [list(r.values()) for r in rows]
                 con.executemany("""
                     INSERT OR IGNORE INTO weather
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
