@@ -1,4 +1,8 @@
 # Python-generated files
+*.db
+*.duckdb
+*.pyc
+.ipynb_checkpoints/
 __pycache__/
 *.py[oc]
 build/
@@ -11,5 +15,4 @@ tempCodeRunnerFile.py
 .venv
 # Data
 raw/
-*.db
 *.html
