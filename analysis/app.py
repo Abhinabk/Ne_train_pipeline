@@ -375,6 +375,15 @@ def weather():
     suggesting low-visibility winter conditions such as fog may impact railway operations more significantly than rainfall.
     """
     )
+def pages():
+    return st.sidebar.radio(
+        "Sections",
+        [
+            "Overview",
+            "Station Analysis",
+            "Temporal Analysis",
+            "Weather Analysis"
+        ])
 
 def main():
     st.set_page_config(layout="wide")
@@ -386,14 +395,20 @@ def main():
         """
     )
 
-    overview()
-    st.divider()
-    train_anlysis()
-    st.divider()
-    station_analysis()
-    st.divider()
-    season_analysis()
-    st.divider()
-    weather()
+    page = pages()
+    if page == "Overview":
+        overview()
+
+    elif page == "Train Analysis":
+        train_anlysis()
+
+    elif page == "Station Analysis":
+        station_analysis()
+
+    elif page == "Temporal Analysis":
+        season_analysis()
+
+    elif page == "Weather Analysis":
+        weather()
 if __name__ == "__main__":
     main()
