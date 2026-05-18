@@ -15,10 +15,10 @@ def stations_needing_update(con)->pd.DataFrame:
             MAX(td.date) AS latest_train_date,
             MAX(w.date) AS latest_weather_date
                                 
-        FROM stations_coordinates s
+        FROM raw.stations_coordinates_raw s
         LEFT JOIN train_delay td
         ON s.station_code = td.station_code
-        LEFT JOIN weather w
+        LEFT JOIN raw.weather_raw w
         ON s.station_code = w.station_code
         GROUP BY
             s.station_code,
@@ -59,7 +59,7 @@ def update_weather(con):
                 #as duckdb expects a tuple/list but flatten_weather_data return list[dict]
                 rows = [list(r.values()) for r in rows]
                 con.executemany("""
-                    INSERT OR IGNORE INTO weather
+                    INSERT OR IGNORE INTO raw.weather_raw
                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """, rows)
                 updated_count += 1

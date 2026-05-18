@@ -1,5 +1,5 @@
 from pathlib import Path
-from script import scraper, parser, merge_to_processed,create_db,get_location,add_station_name,get_weather_info
+from script import scraper, parser, load_csv_to_db,create_db,get_location,add_station_name,get_weather_info
 from api import weather_backfill,weather_incremental,get_named_address
 import time
 import random
@@ -92,14 +92,13 @@ class Pipeline:
         
         add_station_name.add_to_station_coords(path_to_station_coord_csv,
                                             self.paths["raw_html_path"])
-    def build_weather(self):
+    def build_raw_weather(self):
         raw_csv_path = self.paths["raw_csv_path"]
         station_coordinates_path= self.paths["path_to_station_coord_csv"]
-        output_path = self.paths["raw_csv_weather_path"]
         path_to_db = self.paths['database_path']
         with duckdb.connect(str(path_to_db / "ne_pipeline.db")) as con:
 
-            if get_weather_info.table_has_data(con,"weather"):
+            if get_weather_info.table_has_data(con,"raw.weather_raw"):
                 print("[WEATHER] Running incremental update")
                 weather_incremental.update_weather(con)       
             else:
@@ -110,11 +109,9 @@ class Pipeline:
                     con
                 )
         print("DONE\n")
-    
-    def build_processed(self):
-        merge_to_processed.process(self.paths["raw_csv_path"],self.paths["processed_path"])
-        merge_to_processed.process_weather(self.paths["api_data_path"],self.paths["processed_path"])
-        print("DONE \n")
+    def build_raw_train(self):
+        with duckdb.connect(str(self.paths['database_path'] / "ne_pipeline.db")) as con:
+            load_csv_to_db.process_train(self.paths['raw_csv_path'],con)
 
     def build_station_address(self):
         path_to_address_csv = self.paths["path_to_address_csv"]
@@ -135,7 +132,6 @@ class Pipeline:
         with duckdb.connect(str(path_to_db / "ne_pipeline.db")) as con:
             print("Creating the database")
             create_db.create_database(self.paths["database_path"],
-                    self.paths['path_to_train_csv'],
                     self.paths["raw_csv_path"],
                     self.paths["path_to_address_csv"],
                     self.paths["path_to_station_coord_csv"],
@@ -147,14 +143,14 @@ class Pipeline:
         self.fetch(train_data, duration)
         print("------ PARSE ------")
         self.parse(train_data)
+        print("------ RAW TRAIN ------")
+        self.build_raw_train()
         print("------ COORDINATES ------")
         self.build_station_coords()
         print("------ COORDINATES TO ADDRESS ------")
         self.build_station_address()
         print("------ WEATHER ------")
-        self.build_weather()
-        print("------ PROCESSED ------")
-        self.build_processed()
+        self.build_raw_weather()
         print("------ DATABASE------")
         self.build_db()
         
