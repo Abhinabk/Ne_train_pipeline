@@ -17,7 +17,6 @@ def get_route(raw_csv_path: Path) -> list[tuple]:
 def create_database(
     path_to_db: Path,
     path_to_train: Path,
-    path_to_weather: Path,
     raw_csv_path: Path,
     path_to_address_csv,
     path_to_station_coords: Path,
@@ -30,6 +29,35 @@ def create_database(
     #staging schema
     con.execute("""
         CREATE SCHEMA IF NOT EXISTS raw;
+    """)
+    #staging table weather
+    con.execute("""
+    CREATE TABLE IF NOT EXISTS raw.weather_raw(
+        station_code VARCHAR,
+        date DATE,
+        temperature_2m_max DOUBLE,
+        temperature_2m_min DOUBLE,
+        temperature_2m_mean DOUBLE,
+        precipitation_sum DOUBLE,
+        rain_sum DOUBLE,
+        wind_speed_10m_max DOUBLE,
+        wind_gusts_10m_max DOUBLE,
+        relative_humidity_2m_mean DOUBLE,
+        weather_code INTEGER,
+        fetched_at TIMESTAMP DEFAULT now(),
+        PRIMARY KEY (station_code, date)
+        )
+    """)
+    #staging table train
+    con.execute("""
+    CREATE TABLE IF NOT EXISTS raw.train_delay_raw(
+        train_no VARCHAR,
+        station_code VARCHAR,
+        date DATE,
+        delay_minutes INTEGER,
+        fetched_at TIMESTAMP DEFAULT now(),
+        PRIMARY KEY (train_no, station_code, date)
+        )
     """)
     # coordinate
     con.execute("""
@@ -128,7 +156,7 @@ def create_database(
         )
     """)
 
-    con.execute(f"""
+    con.execute("""
         INSERT OR IGNORE INTO weather
         SELECT 
         station_code,
@@ -142,7 +170,7 @@ def create_database(
         wind_gusts_10m_max,
         relative_humidity_2m_mean,
         weather_code
-        FROM read_csv('{str(path_to_weather)}')
+        FROM raw.weather_raw
     """)
     # DENORMALISED VIEW
     con.execute("""
@@ -230,7 +258,6 @@ if __name__ == "__main__":
         create_database(
             path_to_db,
             path_to_ts,
-            path_to_weather,
             raw_csv_path,
             path_to_address_csv,
             path_to_station_coords,

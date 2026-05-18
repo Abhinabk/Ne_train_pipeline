@@ -88,26 +88,6 @@ def build_weather_dataset(
     station_coordinates_path: Path,
     con:duckdb.DuckDBPyConnection) -> None:
 
-    #create the staging tabel
-    con.execute("""
-    CREATE TABLE IF NOT EXISTS raw.weather_raw(
-        station_code VARCHAR,
-        date DATE,
-        temperature_2m_max DOUBLE,
-        temperature_2m_min DOUBLE,
-        temperature_2m_mean DOUBLE,
-        precipitation_sum DOUBLE,
-        rain_sum DOUBLE,
-        wind_speed_10m_max DOUBLE,
-        wind_gusts_10m_max DOUBLE,
-        relative_humidity_2m_mean DOUBLE,
-        weather_code INTEGER,
-        fetched_at TIMESTAMP DEFAULT now(),
-        PRIMARY KEY (station_code, date)
-        )
-    """)
-
-
     need_to_fetch_again = set()
     count = 0
 

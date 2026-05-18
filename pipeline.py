@@ -135,7 +135,7 @@ class Pipeline:
         with duckdb.connect(str(path_to_db / "ne_pipeline.db")) as con:
             print("Creating the database")
             create_db.create_database(self.paths["database_path"],
-                    self.paths['path_to_train_csv'],self.paths['path_to_weather_csv'],
+                    self.paths['path_to_train_csv'],
                     self.paths["raw_csv_path"],
                     self.paths["path_to_address_csv"],
                     self.paths["path_to_station_coord_csv"],
