@@ -107,7 +107,7 @@ class Pipeline:
                 weather_backfill.build_weather_dataset(
                     raw_csv_path,
                     station_coordinates_path,
-                    output_path,
+                    con
                 )
         print("DONE\n")
     

@@ -1,10 +1,11 @@
-from script import get_min_max_date
 from pathlib import Path
 import requests
 from typing import Any
 import pandas as pd
 import time 
 import random
+import duckdb
+from script import get_min_max_date
 # open-meteo api call
 session  = requests.Session()
 
@@ -39,22 +40,12 @@ def fetch_weather_daily(
             if response.status_code == 429:
                 reason = response.json().get("reason","Rate limit exceeded")
                 raise requests.exceptions.HTTPError(reason,response=response)
-            
-                # print(response.text)
-                # print(response.headers)
-                #backoff reties not working adding a global cooldown
-                # cooldown = 60 + random.uniform(0, 10)
-                # print(
-                #     f"[RATE LIMIT] cooling down for {cooldown:.1f}s")
-                # time.sleep(cooldown)
-                # continue
-
+                 
             response.raise_for_status()
             print(f"[FETCH] {station_code}")
             return {"station_code": station_code,"weather": response.json()}
        
-        except(requests.exceptions.Timeout,
-            requests.exceptions.ConnectionError) as e:
+        except(requests.exceptions.Timeout,requests.exceptions.ConnectionError) as e:
             if attempt == max_retries-1:
                 raise e 
             #exp backoff
@@ -95,12 +86,29 @@ def flatten_weather_data(weather_data: dict) -> list[dict]:
 def build_weather_dataset(
     raw_csv_path: Path,
     station_coordinates_path: Path,
-    output_path: Path,
-) -> None:
+    con:duckdb.DuckDBPyConnection) -> None:
 
-    path_to_weather_file = output_path / "weather.csv"
+    #create the staging tabel
+    con.execute("""
+    CREATE TABLE IF NOT EXISTS raw.weather_raw(
+        station_code VARCHAR,
+        date DATE,
+        temperature_2m_max DOUBLE,
+        temperature_2m_min DOUBLE,
+        temperature_2m_mean DOUBLE,
+        precipitation_sum DOUBLE,
+        rain_sum DOUBLE,
+        wind_speed_10m_max DOUBLE,
+        wind_gusts_10m_max DOUBLE,
+        relative_humidity_2m_mean DOUBLE,
+        weather_code INTEGER,
+        fetched_at TIMESTAMP DEFAULT now(),
+        PRIMARY KEY (station_code, date)
+        )
+    """)
+
+
     need_to_fetch_again = set()
-    completed_stations = set()
     count = 0
 
     station_df = pd.read_csv(station_coordinates_path)
@@ -113,15 +121,21 @@ def build_weather_dataset(
     
     start_date,end_date = min_max_date
     #resume from last Station
-    if path_to_weather_file.is_file():
-        existing_df = pd.read_csv(path_to_weather_file,usecols=["station_code"])
-        expected_days = (pd.to_datetime(end_date)- pd.to_datetime(start_date)).days + 1
-        station_counts = (existing_df.groupby("station_code").size())
-
-        completed_stations = set(station_counts[station_counts >= expected_days].index)        
-        count = len(completed_stations)
-        print(f"[RESUME] Found {count} completed stations")
-        
+    expected_days = (pd.to_datetime(end_date)- pd.to_datetime(start_date)).days + 1
+    completed_stations = set(
+        i[0] for i in con.execute("""
+            SELECT
+                station_code
+            FROM  raw.weather_raw
+            GROUP BY station_code
+            HAVING COUNT(DISTINCT date)>=?
+        """,[expected_days]).fetchall() 
+        )
+    #returns a list of tuple [('STATION_A',), ('STATION_B',)] comma makes it a tuple if not its type will be just string
+    # completed_stations = set(i[0] for i in completed_stations_tuple)        
+    count = len(completed_stations)
+    print(f"[RESUME] Found {count} completed stations")
+    
     print("[LOG] Fetching weather data from API...")
 
     for row in station_df.itertuples(index=False):
@@ -137,9 +151,11 @@ def build_weather_dataset(
             data = fetch_weather_daily(station_code,latitude,longitude,start_date,end_date)
             rows = flatten_weather_data(data)
             if rows:
-                df = pd.DataFrame(rows)
-                # no repeated column names not path_to_weather_file.exists() so header is false is file already exist
-                df.to_csv(path_to_weather_file,mode="a",header= not path_to_weather_file.exists(),index=False)
+                row_list = [list(r.values()) for r in rows]
+                con.execute("""
+                    INSERT OR IGNORE INTO raw.weather_raw
+                    SELECT *,now() FROM ?
+                """,[row_list])
             
             count+=1
             print(f"[LOG] Fetched weather for {station_code} Completed: {count}/{total_stations}")
@@ -161,12 +177,13 @@ def build_weather_dataset(
         print("\n[FAILED STATIONS]")
         print(need_to_fetch_again)
 
-    print(f"[DONE] Saved {path_to_weather_file.name}")
+    print("[DONE] Weather data stored in DuckDB")
 
 
 
 if __name__ == "__main__":
-    output_path = Path("data/raw/weather")
     raw_csv_path = Path("data/raw/raw_csv")
     station_coordinates_path = Path("data/processed/station_coordinates.csv")
-    build_weather_dataset(raw_csv_path, station_coordinates_path, output_path)
+    path_to_db = Path("data/database/ne_pipeline.db")
+    with duckdb.connect(str(path_to_db)) as con:
+        build_weather_dataset(raw_csv_path, station_coordinates_path,con)

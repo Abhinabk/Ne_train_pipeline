@@ -27,9 +27,11 @@ def create_database(
     so schema drift have to be careful."""
     route_data = get_route(raw_csv_path)
     print(f"IN DB {path_to_db}")
-
+    #staging schema
+    con.execute("""
+        CREATE SCHEMA IF NOT EXISTS raw;
+    """)
     # coordinate
-
     con.execute("""
         CREATE TABLE IF NOT EXISTS stations_coordinates(
             station_code VARCHAR,
