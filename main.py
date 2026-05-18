@@ -13,8 +13,6 @@ def main():
         "api_data_path":  path/"data"/"raw"/"weather",
         "processed_path": path/"data"/"processed",
         "database_path": path/"data"/"database",
-        "path_to_train_csv": path/"data"/"processed"/"time_series.csv",
-        "path_to_weather_csv": path/"data"/"processed"/"weather.csv",
         "path_to_address_csv": path/"data"/"processed"/"address.csv",
         "path_to_station_coord_csv": path/"data"/"processed"/"station_coordinates.csv"
     }
@@ -26,8 +24,6 @@ def main():
     paths["api_data_path"].mkdir(parents=True, exist_ok=True)
     paths["processed_path"].mkdir(parents=True, exist_ok=True)
     paths["database_path"].mkdir(parents=True, exist_ok=True)
-    paths["path_to_train_csv"].parent.mkdir(parents=True, exist_ok=True)
-    paths["path_to_weather_csv"].parent.mkdir(parents=True, exist_ok=True)
     
   
     train_data = train_info.get_train_info(paths["train_config_path"])

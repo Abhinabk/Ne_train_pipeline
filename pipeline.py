@@ -9,6 +9,7 @@ import duckdb
 class Pipeline:
     def __init__(self, paths: dict[str, Path]):
         self.paths = paths
+        self.con = duckdb.connect(str(self.paths['database_path'] / "ne_pipeline.db"))
 
     # make typehits specific to dict[train_no,train_name]
     def fetch(self, train_data: dict[str, str], duration) -> dict[str, int]:
@@ -95,23 +96,19 @@ class Pipeline:
     def build_raw_weather(self):
         raw_csv_path = self.paths["raw_csv_path"]
         station_coordinates_path= self.paths["path_to_station_coord_csv"]
-        path_to_db = self.paths['database_path']
-        with duckdb.connect(str(path_to_db / "ne_pipeline.db")) as con:
-
-            if get_weather_info.table_has_data(con,"raw.weather_raw"):
-                print("[WEATHER] Running incremental update")
-                weather_incremental.update_weather(con)       
-            else:
-                print("[WEATHER] Running backfill")
-                weather_backfill.build_weather_dataset(
-                    raw_csv_path,
-                    station_coordinates_path,
-                    con
-                )
+        if get_weather_info.table_has_data(self.con,"raw.weather_raw"):
+            print("[WEATHER] Running incremental update")
+            weather_incremental.update_weather(self.con)       
+        else:
+            print("[WEATHER] Running backfill")
+            weather_backfill.build_weather_dataset(
+                raw_csv_path,
+                station_coordinates_path,
+                self.con
+            )
         print("DONE\n")
     def build_raw_train(self):
-        with duckdb.connect(str(self.paths['database_path'] / "ne_pipeline.db")) as con:
-            load_csv_to_db.process_train(self.paths['raw_csv_path'],con)
+        load_csv_to_db.process_train(self.paths['raw_csv_path'],self.con)
 
     def build_station_address(self):
         path_to_address_csv = self.paths["path_to_address_csv"]
@@ -128,15 +125,13 @@ class Pipeline:
         print(f"[LOG] saved to {path_to_address_csv}\n")
 
     def build_db(self):
-        path_to_db = self.paths['database_path']
-        with duckdb.connect(str(path_to_db / "ne_pipeline.db")) as con:
-            print("Creating the database")
-            create_db.create_database(self.paths["database_path"],
-                    self.paths["raw_csv_path"],
-                    self.paths["path_to_address_csv"],
-                    self.paths["path_to_station_coord_csv"],
-                    con
-                    )
+        print("Creating the database")
+        create_db.create_database(self.paths["database_path"],
+                self.paths["raw_csv_path"],
+                self.paths["path_to_address_csv"],
+                self.paths["path_to_station_coord_csv"],
+                self.con
+                )
         
     def run(self, train_data, duration="1y"):
         print("------ FETCH ------")
