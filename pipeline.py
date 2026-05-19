@@ -38,8 +38,8 @@ class Pipeline:
                 delay = random.uniform(2, 4)
                 print(f"sleeping for {delay:.2f}s")
                 time.sleep(delay)
-            except Exception:
-                continue
+            except Exception as e:
+                print(f"[ERROR] {e}")
         print("[SUMMARY]")
         print(f"Skipped: {skipped_count}")
         print(f"Fetched: {fetched_count}")
@@ -134,19 +134,22 @@ class Pipeline:
                 )
         
     def run(self, train_data, duration="1y"):
-        print("------ FETCH ------")
-        self.fetch(train_data, duration)
-        print("------ PARSE ------")
-        self.parse(train_data)
-        print("------ RAW TRAIN ------")
-        self.build_raw_train()
-        print("------ COORDINATES ------")
-        self.build_station_coords()
-        print("------ COORDINATES TO ADDRESS ------")
-        self.build_station_address()
-        print("------ WEATHER ------")
-        self.build_raw_weather()
-        print("------ DATABASE------")
-        self.build_db()
+        try:
+            print("------ FETCH ------")
+            self.fetch(train_data, duration)
+            print("------ PARSE ------")
+            self.parse(train_data)
+            print("------ RAW TRAIN ------")
+            self.build_raw_train()
+            print("------ COORDINATES ------")
+            self.build_station_coords()
+            print("------ COORDINATES TO ADDRESS ------")
+            self.build_station_address()
+            print("------ WEATHER ------")
+            self.build_raw_weather()
+            print("------ DATABASE------")
+            self.build_db()
+        finally:
+            self.con.close()
         
         
