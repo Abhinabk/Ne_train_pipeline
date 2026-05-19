@@ -16,7 +16,8 @@ def main():
         "path_to_train_csv": path/"data"/"processed"/"time_series.csv",
         "path_to_weather_csv": path/"data"/"processed"/"weather.csv",
         "path_to_address_csv": path/"data"/"processed"/"address.csv",
-        "path_to_station_coord_csv": path/"data"/"processed"/"station_coordinates.csv"
+        "path_to_station_coord_csv": path/"data"/"processed"/"station_coordinates.csv",
+        "path_to_analysis": path/"analysis"
     }
     #TODO Move to pipeline
     # create path if not exist for saving 
@@ -28,7 +29,7 @@ def main():
     paths["database_path"].mkdir(parents=True, exist_ok=True)
     paths["path_to_train_csv"].parent.mkdir(parents=True, exist_ok=True)
     paths["path_to_weather_csv"].parent.mkdir(parents=True, exist_ok=True)
-    
+    paths["path_to_analysis"].mkdir(parents=True, exist_ok=True)
   
     train_data = train_info.get_train_info(paths["train_config_path"])
 

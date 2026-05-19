@@ -21,6 +21,7 @@ def create_database(
     raw_csv_path: Path,
     path_to_address_csv,
     path_to_station_coords: Path,
+    path_to_analysis: Path,
     con: duckdb.DuckDBPyConnection,
 ) -> None:
     """old schema expected train_no new data became station_code as column types were same
@@ -125,7 +126,7 @@ def create_database(
         PRIMARY KEY (station_code, date)
         )
     """)
-   
+
     con.execute(f"""
         INSERT OR IGNORE INTO weather
         SELECT 
@@ -142,9 +143,7 @@ def create_database(
             weather_code
         FROM read_csv('{str(path_to_weather)}')
     """)
-   
-        
-    
+
     # DENORMALISED VIEW
     con.execute("""
     CREATE OR REPLACE VIEW merged_view AS
@@ -185,10 +184,12 @@ def create_database(
 
     """)
 
+    parquet_out = str(path_to_analysis/ "merged_view.parquet")
     con.execute("""
     COPY (SELECT * FROM merged_view) 
-    TO 'analysis/merged_view.parquet' 
-    """)
+    TO ?
+    """,[parquet_out])
+
     con.sql("""
     SELECT * from train_delay USING SAMPLE 10 ROWS
     """).show()
@@ -226,7 +227,9 @@ if __name__ == "__main__":
     raw_csv_path = Path("data/raw/raw_csv")
     path_to_address_csv = Path("data/processed/address.csv")
     path_to_station_coords = Path("data/processed/station_coordinates.csv")
+    path_to_analysis = Path("analysis")
     path_to_db.mkdir(parents=True, exist_ok=True)
+
     with duckdb.connect(str(path_to_db / "ne_pipeline.db")) as con:
         create_database(
             path_to_db,
@@ -235,5 +238,6 @@ if __name__ == "__main__":
             raw_csv_path,
             path_to_address_csv,
             path_to_station_coords,
-            con,
+            path_to_analysis,
+            con
         )
