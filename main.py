@@ -10,7 +10,6 @@ def main():
         "raw_csv_weather_path": path / "data"/"raw"/"weather",
         "train_config_path": path / "config/trains.json",
         "train_geo_location_json": path / "train_geo_location"/"india_railway_stations.geojson",
-        "api_data_path":  path/"data"/"raw"/"weather",
         "processed_path": path/"data"/"processed",
         "database_path": path/"data"/"database",
         "path_to_address_csv": path/"data"/"processed"/"address.csv",
@@ -20,8 +19,6 @@ def main():
     # create path if not exist for saving 
     paths["raw_html_path"].mkdir(parents=True, exist_ok=True)
     paths["raw_csv_path"].mkdir(parents=True, exist_ok=True)
-    paths["raw_csv_weather_path"].mkdir(parents=True, exist_ok=True)
-    paths["api_data_path"].mkdir(parents=True, exist_ok=True)
     paths["processed_path"].mkdir(parents=True, exist_ok=True)
     paths["database_path"].mkdir(parents=True, exist_ok=True)
     

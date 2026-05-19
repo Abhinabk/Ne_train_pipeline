@@ -123,6 +123,9 @@ class Pipeline:
             self.paths["processed_path"]
         )
         print(f"[LOG] saved to {path_to_address_csv}\n")
+    def create_schema(self):
+        print("Creating the schema")
+        create_db.create_schema(self.con)
 
     def build_db(self):
         print("Creating the database")
@@ -132,6 +135,7 @@ class Pipeline:
                 self.paths["path_to_station_coord_csv"],
                 self.con
                 )
+        create_db.create_view(self.con)
         
     def run(self, train_data, duration="1y"):
         try:
@@ -147,6 +151,8 @@ class Pipeline:
             self.build_station_address()
             print("------ WEATHER ------")
             self.build_raw_weather()
+            print("------ SCHEMA ------")
+            self.create_schema()
             print("------ DATABASE------")
             self.build_db()
         finally:

@@ -16,7 +16,7 @@ def stations_needing_update(con)->pd.DataFrame:
             MAX(w.date) AS latest_weather_date
                                 
         FROM raw.stations_coordinates_raw s
-        LEFT JOIN train_delay td
+        LEFT JOIN raw.train_delay_raw td
         ON s.station_code = td.station_code
         LEFT JOIN raw.weather_raw w
         ON s.station_code = w.station_code
@@ -24,7 +24,7 @@ def stations_needing_update(con)->pd.DataFrame:
             s.station_code,
             s.latitude,
             s.longitude
-        """).fetch_df()
+        """).fetchdf()
 
     stations_info["latest_weather_date"] = pd.to_datetime(stations_info["latest_weather_date"])
     stations_info["latest_train_date"] = pd.to_datetime(stations_info["latest_train_date"])
@@ -60,7 +60,7 @@ def update_weather(con):
                 rows = [list(r.values()) for r in rows]
                 con.executemany("""
                     INSERT OR IGNORE INTO raw.weather_raw
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?)
                 """, rows)
                 updated_count += 1
                 print(f"[SUCCESS] {station_code}")

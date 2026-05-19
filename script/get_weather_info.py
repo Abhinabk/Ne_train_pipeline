@@ -1,10 +1,9 @@
 import duckdb 
 
 def table_has_data(con:duckdb.DuckDBPyConnection,table_name:str) -> bool:
-    table = con.execute(f"""
+    table = con.execute("""
         SELECT COUNT(*)
-        FROM information_schema.tables
-        WHERE table_name = '{table_name}'
+        FROM raw.weather_raw
     """).fetchone()
 
     if table is None:
