@@ -125,7 +125,34 @@ def create_database(
         PRIMARY KEY (station_code, date)
         )
     """)
+    weather_has_data = con.execute("""
+            SELECT EXISTS(
+                SELECT 1 FROM weather LIMIT 1
+            )
+        """).fetchone()[0] # type: ignore
+    
+    if not weather_has_data:
+        print("[WEATHER DB] Loading from CSV")
 
+        con.execute(f"""
+            INSERT OR IGNORE INTO weather
+            SELECT 
+                station_code,
+                date,
+                temperature_2m_max,
+                temperature_2m_min,
+                temperature_2m_mean,
+                precipitation_sum,
+                rain_sum,
+                wind_speed_10m_max,
+                wind_gusts_10m_max,
+                relative_humidity_2m_mean,
+                weather_code
+            FROM read_csv('{str(path_to_weather)}')
+        """)
+    else:
+        print("[WEATHER DB] Existing weather table found, skipping CSV load")
+        
     con.execute(f"""
         INSERT OR IGNORE INTO weather
         SELECT 

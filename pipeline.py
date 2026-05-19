@@ -151,11 +151,9 @@ class Pipeline:
         self.build_station_coords()
         print("------ COORDINATES TO ADDRESS ------")
         self.build_station_address()
-        print("------ WEATHER ------")
-        self.build_weather()
         print("------ PROCESSED ------")
         self.build_processed()
         print("------ DATABASE------")
         self.build_db()
-        
-        
+        print("------ WEATHER ------")
+        self.build_weather()
