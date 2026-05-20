@@ -1,32 +1,95 @@
-# TODO
-1. ~~Add type hints to all files~~
-2. ~~Add train_no as a primary column to all CSVs~~
-3. ~~Clean up main.py~~
-4.  I am check if diff betenn dates say 365 so 365 rows exits for a station code 
-    and if less then trigger an api call but have if we do after 5 days now only 5 extra
-    days but it will trigger an api call for enire 365 days for each staion wich is lost of wasted api calls sice we only nedd 5 days worth of new data so better approch will be to check for last date recorded in weather table for ech distinct station and only get the diff of data from last recorded date and date when api needs to be called  (son incremental lload insted of full refresh)
-## MAJOR:
-1. ~~Integrate weather API (evaluate: OpenWeather, Meteostat)~~
-2. ~~Map timestamps → weather data~~
-3. ~~Have to caonvert from wide to long format time_series.csv cant proceed further without it messing with concat~~
-3. Do analysis on the weather file
-4. Add a DAG engine and vizualizer
+#### *An end-to-end data engineering pipeline that scrapes, processes and analyzes train delay patterns across Northeast India (mainly Assam at current stage)- enriched with weather data to uncover which weather factors contributes the most to delays*
+
+## Pipeline overview
+___
+![Pipeline|697](https://raw.githubusercontent.com/Abhinabk/Ne_train_pipeline/feature/per-station-weather/assets/pipeline.png)
 
 
-# DATA
-1. The data in time_series.csv signifies delay in minutes 
+## Key Features
 
-# IMP
-Now with station-level weather you have:
-  stations×days
-instead of:
-  trains×days
-So row growth becomes much larger.
-Example:
-9 trains * 365days ~ 3krows
-216 stations×365 days ~ 78k rows
-That’s why:
-row count exploded
-API load increased
-rate limiting appeared
-even though request count may still seem small
+**Scraping & Parsing**
+
+- Scrapes 1-year delay history from [etrain.info](http://etrain.info) 
+- Parses embedded JSON from raw HTML into structured CSVs
+- Skips already-fetched files and re-fetches stale ones automatically
+
+**Weather Integration**
+
+- Fetches historical daily weather (temperature, rainfall, wind, humidity) from the Open-Meteo archive API
+- Backfill on first run; **incremental updates** on subsequent runs  only fetches from last recorded date per station, not a full refresh
+-  Maps each of 200+ railway stations to `lat` /`long` coordinates via a `GeoJSON` dataset (with manual fallbacks for renamed/missing stations)
+- Maps each coordinates to an address (`Nominatim`)
+
+**Data Modeling (DuckDB)**
+
+- Normalized schema: `train_delay`, `weather`, `stations_coordinates`, `station_address`, `train_route`
+- Denormalized `merged_view` joining all tables — exported to Parquet for fast dashboard queries
+- Idempotent inserts (`INSERT OR IGNORE`) so the pipeline is safe to re-run
+
+**Analytics Dashboard (Streamlit + Plotly)**
+[View Streamlit Dashboard](https://ne-train-pipeline-analysis.streamlit.app/?embed_options=dark_theme)
+
+- Overview: total records, trains, stations, avg delay, date range
+- Train Analysis: avg vs median delay per train (reveals outlier disruptions)
+- Station Analysis: interactive map with delay-scaled bubbles + top 10 worst stations
+- Temporal Analysis: delay by season + month × weekday heatmap
+- Weather Analysis: scatter plots, violin plots, and correlation heatmap for 4 weather variables
+## Tech Stack
+
+| Layer | Tool |
+| --- | --- |
+| Scraping | `requests`, `BeautifulSoup` |
+| Parsing | `BeautifulSoup`, `re`, `pandas` |
+| Geo Lookup | GeoJSON dataset + `geopy` (Nominatim) |
+| Weather | Open-Meteo Archive API |
+| Storage | `DuckDB` + Parquet |
+| Dashboard | `Streamlit`, `Plotly`, `pydeck` |
+| Dev |`uv` |
+## Engineering Challenges  
+  
+- Handling API rate limiting while fetching weather data for 200+ stations  
+- Managing incremental updates efficiently without re-fetching full historical datasets  
+- Resolving missing or renamed railway stations in GeoJSON datasets  
+- Balancing normalized warehouse design with dashboard query performance  
+- Preventing duplicate inserts during repeated pipeline runs
+- Identifying and handling schema drift after transitioning from train-level weather mapping to per-station weather enrichment
+## Scaling Insight
+
+Moving from train-level weather aggregation to station-level enrichment significantly increased dataset growth.
+- Train-level: `trains × days`
+- Station-level: `stations × days`
+- Example:- `9 trains × 365 days ≈ 3k rows`
+- `216 stations × 365 days ≈ 78k rows`
+This increase amplified:
+- API load
+- rate limiting
+- storage growth
+- incremental update complexity.
+**This shift led to the introduction of incremental weather ingestion instead of full historical refreshes.**
+## Running It
+
+
+```bash
+#clone the repo 
+git clone https://github.com/Abhinabk/Ne_train_pipeline
+#cd into it 
+cd Ne_train_pipeline
+#change branch to feature/per-station-weather
+git switch feature/per-station-weather
+# Install dependencies
+uv sync
+# Run the full pipeline
+uv run main.py
+# run dashboard
+uv run -m streamlit run analysis/app.py
+```
+
+## What's Next
+
+- Using `CSV` as a staging storage introduced challenges around schema management, stale data handling, and data integrity.
+- A better way would be to use DuckDB as a `Data warehouse` to store the data and divide it into different schemas `raw` , `staging` , `analytics`.
+- The pipeline is currently orchestrated through a single Python entry point, which became harder to maintain as the project grew. Migrating to a workflow orchestrator like `Prefect` would improve scheduling, retries, observability, and DAG visualization.
+- Using manual retry logic while informative but a much better way would be to use `Prefect` which will make the code much simpler.
+- The pipeline currently processes a relatively small number of trains(9). Scaling to larger railway datasets would require using `asynchronous ingestion` instead of relying on manually curated JSON configuration files.
+- Data quality validation is still minimal. Adding validation checks for missing stations, duplicate records, invalid weather responses, and schema drift would improve reliability
+- The current project structure evolved organically during development. Adopting a  cleaner modular architecture such as the Medallion would improve maintainability.
