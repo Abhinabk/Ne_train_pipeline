@@ -1,7 +1,6 @@
 import json
 from pathlib import Path
 import pandas as pd
-from difflib import SequenceMatcher
 
 MANUAL_COORDS = {
     "DDU":  {"longitude": 83.11925 , "latitude":25.278149 },  #prev mgs (mugal sarai)
