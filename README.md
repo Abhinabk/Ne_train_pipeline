@@ -2,7 +2,7 @@
 
 ## Pipeline overview
 ___
-![Pipeline|697](https://raw.githubusercontent.com/Abhinabk/Ne_train_pipeline/feature/per-station-weather/assets/pipeline.png)
+![Pipeline|697](assets/pipeline.excalidraw.svg)
 
 
 ## Key Features
