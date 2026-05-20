@@ -19,7 +19,6 @@ def main():
         "path_to_station_coord_csv": path/"data"/"processed"/"station_coordinates.csv",
         "path_to_analysis": path/"analysis"
     }
-    #TODO Move to pipeline
     # create path if not exist for saving 
     paths["raw_html_path"].mkdir(parents=True, exist_ok=True)
     paths["raw_csv_path"].mkdir(parents=True, exist_ok=True)

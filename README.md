@@ -60,14 +60,13 @@ Moving from train-level weather aggregation to station-level enrichment signific
 - Station-level: `stations × days`
 - Example:- `9 trains × 365 days ≈ 3k rows`
 - `216 stations × 365 days ≈ 78k rows`
+
 This increase amplified:
-- API load
+- API load 
 - rate limiting
-- storage growth
 - incremental update complexity.
 **This shift led to the introduction of incremental weather ingestion instead of full historical refreshes.**
 ## Running It
-
 
 ```bash
 #clone the repo 
@@ -83,7 +82,6 @@ uv run main.py
 # run dashboard
 uv run -m streamlit run analysis/app.py
 ```
-
 ## What's Next
 
 - Using `CSV` as a staging storage introduced challenges around schema management, stale data handling, and data integrity.
@@ -92,5 +90,5 @@ uv run -m streamlit run analysis/app.py
 - Using manual retry logic while informative but a much better way would be to use `Prefect` which will make the code much simpler.
 - The pipeline currently processes a relatively small number of trains(9). Scaling to larger railway datasets would require using `asynchronous ingestion` instead of relying on manually curated JSON configuration files.
 - Logging is currently print-based. Introducing structured logging and monitoring would make debugging and pipeline observability significantly better.
-- Data quality validation is still minimal. Adding validation checks for missing stations, duplicate records, invalid weather responses, and schema drift would improve reliability
+- Data quality validation is still minimal. Adding validation checks for missing stations,invalid responses, and schema drift can be handled using tools such as `Pydentic` would improve reliability.
 - The current project structure evolved organically during development. Adopting a  cleaner modular architecture such as the Medallion would improve maintainability.
