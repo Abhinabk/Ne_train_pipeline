@@ -91,5 +91,6 @@ uv run -m streamlit run analysis/app.py
 - The pipeline is currently orchestrated through a single Python entry point, which became harder to maintain as the project grew. Migrating to a workflow orchestrator like `Prefect` would improve scheduling, retries, observability, and DAG visualization.
 - Using manual retry logic while informative but a much better way would be to use `Prefect` which will make the code much simpler.
 - The pipeline currently processes a relatively small number of trains(9). Scaling to larger railway datasets would require using `asynchronous ingestion` instead of relying on manually curated JSON configuration files.
+- Logging is currently print-based. Introducing structured logging and monitoring would make debugging and pipeline observability significantly better.
 - Data quality validation is still minimal. Adding validation checks for missing stations, duplicate records, invalid weather responses, and schema drift would improve reliability
 - The current project structure evolved organically during development. Adopting a  cleaner modular architecture such as the Medallion would improve maintainability.
